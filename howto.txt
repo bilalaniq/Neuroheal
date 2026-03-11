@@ -1,0 +1,7 @@
+asenna https://developer.android.com/tools/releases/platform-tools
+
+npx expo start --tunnel
+adb reverse tcp:8081 tcp:8081
+adb reverse --list
+
+exp://127.0.0.1:8081 expo sovelluksessa

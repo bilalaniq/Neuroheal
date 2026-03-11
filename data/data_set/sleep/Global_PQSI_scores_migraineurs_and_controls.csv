@@ -1,0 +1,21 @@
+﻿Authors_year,Reference,Country of Publication,Publication Type,Year,Journal,M_n,M_M,M_sd,C_n,C_M,C_sd,migraine_frequency,drug_control,sleep_disorders,matched_controls,ROB_score
+Barbanti et al. (2013),60,Netherlands,Journal Article,2013,Sleep Medicine,100,9.5,4,100,4.5,3.4,chronic,yes,no,yes,6
+Sengul et al. (2015),24,Australia,Journal Article,2015,Sleep and Biological Rhythms,120,8.4,3.1,45,3.8,2.8,chronic,yes,no,no,6
+Lin et al. (2016b),67,England,Journal Article,2016,Journal of Headache & Pain,57,9.8,4.4,133,7.4,3,chronic,no,no,no,6
+Lin et al. (2019),68,Switzerland,Journal Article,2019,Frontiers in Neurology,96,10.2,4,177,6.5,2.9,chronic,no,no,no,6
+Chu et al. (2018),61,United States,Journal Article,2018,Headache,65,9.8,4.2,179,7.3,3,chronic,no,no,no,7
+Lin et al. (2016a),66,United States,Journal Article,2016,Medicine,34,9.8,4.1,134,7,3.4,chronic,no,no,yes,6
+Kozak et al. (2017),65,Italy,Journal Article,2017,Acta Neurologica Belgica,55,8.6,3.74,57,7.25,3.13,episodic,no,no,yes,6
+Rafique et al. (2020),70,New Zealand,Journal Article,2020,Journal of pain research,103,7.09,2.82,103,6.95,2.45,episodic,yes,yes,yes,7
+Rockett et al. (2013),71,Italy,Journal Article,2013,The journal of headache and pain,15,7.2,3.5,15,6.2,2.7,episodic,no,no,yes,5
+Song et al. (2018),72,United Kingdom,Journal Article,2018,Journal of Headache and Pain,143,5.6,2.6,1422,4.2,1.9,episodic,no,no,no,4
+Walters et al. (2014),75,United States,Journal Article,2014,Headache,78,8.9,3.39,208,6.63,3.02,episodic,no,no,no,5
+Dikmen et al. (2015),23,Italy,Journal Article,2015,Acta Neurologica Belgica,87,5.5,2.9,41,4.4,2.5,episodic,yes,no,no,4
+van Oosterhout et al. (2018),74,United Kingdom,Journal Article,2018,Cephalalgia,2389,6.5,3.6,189,4.2,2.8,episodic,no,no,no,6
+Gori et al. (2005),63,Italy,Journal Article,2005,Journal of Headache and Pain,100,7,4.2,30,3.75,1.3,episodic,no,no,no,2
+Karthik et al. (2012),64,Netherlands,Journal Article,2012,Journal of the Neurological Sciences,90,7.17,3.5,90,2.09,2,episodic,yes,no,yes,5
+Suzuki et al. (2013),73,United Kingdom,Journal Article,2013,Cephalalgia,161,5.6,3.1,140,4.6,2.4,episodic,no,no,no,5
+Barbanti et al. (2007),59,United Kingdom,Journal Article,2007,Cephalalgia,100,4.1,2.5,100,4.1,2.5,episodic,yes,yes,yes,7
+Engstrom et al. (2013),27,,Journal Article,2013,The journal of headache and pain,53,6.3,3.2,34,3.8,2.6,episodic,yes,no,yes,4
+Engstrom et al. (2014),62,United Kingdom,Journal Article,2014,Acta Neurologica Scandinavica,53,6.6,4.4,34,1.5,1.4,episodic,no,no,yes,6
+Morgan et al. (2015),69,United States,Journal Article,2015,Journal of Headache and Pain,145,8.4,3.5,915,6.9,3.6,episodic,no,no,no,5

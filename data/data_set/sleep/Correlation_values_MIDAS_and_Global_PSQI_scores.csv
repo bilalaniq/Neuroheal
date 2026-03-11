@@ -1,0 +1,5 @@
+Authors,Reference,Year,Publication Type,Journal,R,p_value,type,n
+Sadeghniiat et al. (2012),25,2012,Journal Article,Acta Medica Iranica,0.6,0.001,Pearson's,332
+Yon et al. (2020),22,2020,Journal Article,Annals of Medical Research,-0.201,0.383,Spearman's,21
+Dikmen et al. (2015),23,2015,Journal Article,Acta Neurologica Belgica,0.234,0.04,Pearson's,87
+Sengul et al. (2015),24,2015,Journal Article,Sleep and Biological Rhythms,0.35,0.001,Pearson's,120

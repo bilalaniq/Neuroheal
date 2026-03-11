@@ -1,0 +1,11 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'backend/Dockerfile'
+      - '-t'
+      - 'gcr.io/aava-pfizer-ml/migraine-classifier'
+      - '.'
+images:
+  - 'gcr.io/aava-pfizer-ml/migraine-classifier'
