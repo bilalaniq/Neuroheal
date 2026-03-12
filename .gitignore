@@ -348,3 +348,100 @@ storybook-static/
 .next/
 .nuxt/
 .svelte-kit/
+
+
+# ═══════════════════════════════════════════════
+#           GOOGLE FIT / OAUTH / HEALTH
+# ═══════════════════════════════════════════════
+
+## Google OAuth tokens — NEVER commit these
+token.pickle
+token.json
+oauth_token.*
+google_token.*
+*_token.pickle
+*_token.json
+
+## Google API credentials — NEVER commit these
+credentials.json
+client_secret*.json
+service-account*.json
+*-service-account.json
+gcp-credentials.json
+google-credentials.json
+GoogleService-Info.plist
+
+## Google Cloud
+.gcloud/
+gcloud-key.json
+application_default_credentials.json
+
+## Health data exports (can be large / sensitive)
+health_data/
+health_export/
+fit_data/
+*.fit
+*.gpx
+*.tcx
+
+
+# ═══════════════════════════════════════════════
+#              PYTHON BACKEND SPECIFIC
+# ═══════════════════════════════════════════════
+
+## FastAPI / Uvicorn
+.uvicorn_pid
+
+## Pydantic cache
+.pydantic_v1/
+
+## Local data stores (manual health entries etc.)
+manual_health_data.json
+local_health_store.json
+health_store/
+
+## Backend virtual environment (common names)
+backend/venv/
+backend/.venv/
+backend/env/
+
+## Migration files (if using Alembic)
+alembic/versions/*.pyc
+
+## Test fixtures with real data
+tests/fixtures/real_data/
+tests/data/
+
+
+# ═══════════════════════════════════════════════
+#                MIGRAINE APP SPECIFIC
+# ═══════════════════════════════════════════════
+
+## Trained migraine model artifacts
+migraine_model/
+migraine_classifier/
+model_artifacts/
+scaler.pkl
+label_encoder.pkl
+migraine*.pt
+migraine*.pth
+migraine*.pkl
+
+## BigQuery credentials & exports
+bigquery_key.json
+bq_export/
+bigquery_export/
+
+## Gemini / AI API keys (if stored locally)
+gemini_key.txt
+ai_keys.txt
+
+## Experience replay buffer (online learning)
+replay_buffer.pkl
+replay_buffer.json
+online_learning_state/
+
+## User prediction history (sensitive)
+prediction_history/
+user_data/
+patient_data/
