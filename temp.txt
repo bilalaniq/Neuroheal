@@ -1,0 +1,55 @@
+┌──(venv)(kali㉿DESKTOP-T4C44PD)-[/mnt/d/breeha/backend]
+└─$ curl http://localhost:8000/health/steps?days=7
+{"detail":"403 Client Error: Forbidden for url: https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate"}
+┌──(venv)(kali㉿DESKTOP-T4C44PD)-[/mnt/d/breeha/backend]
+└─$ curl -H "Authorization: Bearer $(python3 -c "import pickle; c=pickle.load(open('/mnt/d/breeha/backend/token.pickle','rb')); print(c.token)")" "https://www.googleapis.com/fitness/v1/users/me/dataSources"
+{
+  "dataSource": [
+    {
+      "dataStreamId": "derived:com.google.sleep.segment:com.google.android.gms:merged",
+      "dataStreamName": "merged",
+      "type": "derived",
+      "dataType": {
+        "name": "com.google.sleep.segment",
+        "field": [
+          {
+            "name": "sleep_segment_type",
+            "format": "integer"
+          }
+        ]
+      },
+      "application": {
+        "packageName": "com.google.android.gms"
+      },
+      "dataQualityStandard": []
+    },
+    {
+      "dataStreamId": "raw:com.google.step_count.cumulative:Xiaomi:23021RAAEG:7aef4bf7:pedometer  Non-wakeup",
+      "dataStreamName": "pedometer  Non-wakeup",
+      "type": "raw",
+      "dataType": {
+        "name": "com.google.step_count.cumulative",
+        "field": [
+          {
+            "name": "steps",
+            "format": "integer"
+          }
+        ]
+      },
+      "device": {
+        "uid": "7aef4bf7",
+        "type": "phone",
+        "version": "",
+        "model": "23021RAAEG",
+        "manufacturer": "Xiaomi"
+      },
+      "dataQualityStandard": []
+    }
+  ]
+}
+
+┌──(venv)(kali㉿DESKTOP-T4C44PD)-[/mnt/d/breeha/backend]
+└─$ curl http://localhost:8000/health/steps?days=7
+{"detail":"403 Client Error: Forbidden for url: https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate"}
+┌──(venv)(kali㉿DESKTOP-T4C44PD)-[/mnt/d/breeha/backend]
+└─$

@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     BIGQUERY_DATASET: str = os.getenv("BIGQUERY_DATASET", "migraine_data")
     BIGQUERY_TABLE: str = os.getenv("BIGQUERY_TABLE", "predictions")
 
+    # Google Fit API settings
+    USE_GOOGLE_FIT: bool = os.getenv("USE_GOOGLE_FIT", "true").lower() == "true"
+    GOOGLE_FIT_CREDENTIALS_FILE: str = os.getenv("GOOGLE_FIT_CREDENTIALS_FILE", "credentials.json")
+    GOOGLE_FIT_TOKEN_FILE: str = os.getenv("GOOGLE_FIT_TOKEN_FILE", "token.pickle")
+    GOOGLE_FIT_DEFAULT_DAYS: int = int(os.getenv("GOOGLE_FIT_DEFAULT_DAYS", "30"))
+
     class Config:
         env_file = ".env"
         case_sensitive = True

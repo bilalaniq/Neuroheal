@@ -288,3 +288,354 @@ class SavePredictionResponse(BaseModel):
     bigquery_saved: bool = Field(..., description="Whether saved to BigQuery")
     prediction: str = Field(..., description="Prediction result")
     confidence: float = Field(..., description="Prediction confidence")
+
+
+# Google Fit Health Data Schemas
+
+class StepsData(BaseModel):
+    """Daily step count data."""
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    steps: int = Field(..., ge=0, description="Number of steps")
+
+
+class StepsResponse(BaseModel):
+    """Response with step count data."""
+    status: str = Field(..., description="Status of the request")
+    total_steps: int = Field(..., description="Total steps in period")
+    average_steps: int = Field(..., description="Average steps per day")
+    period_days: int = Field(..., description="Number of days with data")
+    daily_steps: List[StepsData] = Field(..., description="Daily step breakdown")
+    start_date: str = Field(..., description="Period start date")
+    end_date: str = Field(..., description="Period end date")
+
+
+class SleepRecord(BaseModel):
+    """Individual sleep record."""
+    start_time: str = Field(..., description="Sleep start time ISO format")
+    end_time: str = Field(..., description="Sleep end time ISO format")
+    duration_minutes: float = Field(..., ge=0, description="Duration in minutes")
+    stage: str = Field(..., description="Sleep stage (Awake, Light sleep, Deep sleep, etc)")
+
+
+class SleepSchedule(BaseModel):
+    """Sleep schedule statistics."""
+    average_sleep_start_hour: Optional[float] = Field(None, description="Average hour when sleep starts")
+    earliest_sleep_hour: Optional[float] = Field(None, description="Earliest sleep hour")
+    latest_sleep_hour: Optional[float] = Field(None, description="Latest sleep hour")
+    consistency_score: Optional[float] = Field(None, description="Sleep consistency percentage")
+    status: Optional[str] = Field(None, description="Status message if no data")
+
+
+class SleepResponse(BaseModel):
+    """Response with sleep data."""
+    status: str = Field(..., description="Status of the request")
+    total_sleep_hours: float = Field(..., ge=0, description="Total sleep hours")
+    total_sleep_minutes: float = Field(..., ge=0, description="Total sleep minutes")
+    average_sleep_hours: float = Field(..., ge=0, description="Average sleep per night")
+    nights_recorded: int = Field(..., ge=0, description="Number of nights with data")
+    sleep_records: List[SleepRecord] = Field(..., description="Individual sleep records")
+    sleep_schedule: Optional[SleepSchedule] = Field(None, description="Sleep schedule statistics")
+    start_date: str = Field(..., description="Period start date")
+    end_date: str = Field(..., description="Period end date")
+    message: Optional[str] = Field(None, description="Additional message")
+
+
+class HeartRateData(BaseModel):
+    """Heart rate measurement."""
+    timestamp: str = Field(..., description="Measurement timestamp ISO format")
+    bpm: float = Field(..., ge=0, description="Beats per minute")
+
+
+class HeartRateResponse(BaseModel):
+    """Response with heart rate data."""
+    status: str = Field(..., description="Status of the request")
+    min_bpm: Optional[float] = Field(None, ge=0, description="Minimum heart rate")
+    max_bpm: Optional[float] = Field(None, ge=0, description="Maximum heart rate")
+    average_bpm: Optional[float] = Field(None, ge=0, description="Average heart rate")
+    measurements_count: int = Field(..., ge=0, description="Number of measurements")
+    heart_rates: List[HeartRateData] = Field(..., description="Heart rate measurements")
+    start_date: Optional[str] = Field(None, description="Period start date")
+    end_date: Optional[str] = Field(None, description="Period end date")
+    message: Optional[str] = Field(None, description="Additional message")
+    watch_required: Optional[bool] = Field(None, description="True if a smartwatch is needed")
+    recommended_device: Optional[str] = Field(None, description="Recommended device to get this data")
+    setup_instructions: Optional[str] = Field(None, description="How to set up the device")
+
+
+class BloodPressureReading(BaseModel):
+    """Blood pressure reading."""
+    timestamp: str = Field(..., description="Reading timestamp ISO format")
+    systolic: float = Field(..., ge=0, description="Systolic pressure mmHg")
+    diastolic: float = Field(..., ge=0, description="Diastolic pressure mmHg")
+    status: str = Field(..., description="BP status (Normal, Elevated, High Stage 1/2, Crisis)")
+
+
+class BloodPressureResponse(BaseModel):
+    """Response with blood pressure data."""
+    status: str = Field(..., description="Status of the request")
+    readings_count: int = Field(..., ge=0, description="Number of readings")
+    readings: List[BloodPressureReading] = Field(..., description="Blood pressure readings")
+    start_date: Optional[str] = Field(None, description="Period start date")
+    end_date: Optional[str] = Field(None, description="Period end date")
+    message: Optional[str] = Field(None, description="Additional message")
+    watch_required: Optional[bool] = Field(None, description="True if a device is needed")
+    recommended_device: Optional[str] = Field(None, description="Recommended device")
+    setup_instructions: Optional[str] = Field(None, description="How to set up")
+
+
+class WeightMeasurement(BaseModel):
+    """Weight measurement."""
+    timestamp: str = Field(..., description="Measurement timestamp ISO format")
+    weight_kg: float = Field(..., gt=0, description="Weight in kilograms")
+    weight_lbs: float = Field(..., gt=0, description="Weight in pounds")
+
+
+class WeightResponse(BaseModel):
+    """Response with weight data."""
+    status: str = Field(..., description="Status of the request")
+    latest_weight_kg: Optional[float] = Field(None, gt=0, description="Latest weight in kg")
+    latest_weight_lbs: Optional[float] = Field(None, gt=0, description="Latest weight in lbs")
+    min_weight_kg: Optional[float] = Field(None, gt=0, description="Minimum weight in kg")
+    max_weight_kg: Optional[float] = Field(None, gt=0, description="Maximum weight in kg")
+    measurements_count: int = Field(..., ge=0, description="Number of measurements")
+    measurements: List[WeightMeasurement] = Field(..., description="Weight measurements")
+    start_date: Optional[str] = Field(None, description="Period start date")
+    end_date: Optional[str] = Field(None, description="Period end date")
+    message: Optional[str] = Field(None, description="Additional message")
+    watch_required: Optional[bool] = Field(None, description="True if a smart scale is needed")
+    recommended_device: Optional[str] = Field(None, description="Recommended device")
+    setup_instructions: Optional[str] = Field(None, description="How to set up")
+
+
+class AllHealthDataResponse(BaseModel):
+    """Response with all health data from Google Fit."""
+    status: str = Field(..., description="Status of the request")
+    steps: StepsResponse = Field(..., description="Step count data")
+    sleep: SleepResponse = Field(..., description="Sleep data")
+    heart_rate: HeartRateResponse = Field(..., description="Heart rate data")
+    blood_pressure: BloodPressureResponse = Field(..., description="Blood pressure data")
+    weight: WeightResponse = Field(..., description="Weight data")
+    timestamp: str = Field(..., description="Response timestamp")
+
+
+# --- New extended health data schemas ---
+
+class CaloriesData(BaseModel):
+    date: str
+    calories: float = Field(..., ge=0, description="Calories burned (kcal)")
+
+class CaloriesResponse(BaseModel):
+    status: str
+    total_calories: float
+    average_calories: float
+    period_days: int
+    daily_calories: List[CaloriesData]
+    start_date: str
+    end_date: str
+    message: Optional[str] = None
+
+
+class DistanceData(BaseModel):
+    date: str
+    distance_meters: float = Field(..., ge=0)
+    distance_km: float = Field(..., ge=0)
+    distance_miles: float = Field(..., ge=0)
+
+class DistanceResponse(BaseModel):
+    status: str
+    total_distance_km: float
+    total_distance_miles: float
+    average_distance_km: float
+    period_days: int
+    daily_distance: List[DistanceData]
+    start_date: str
+    end_date: str
+    message: Optional[str] = None
+
+
+class ActiveMinutesData(BaseModel):
+    date: str
+    active_minutes: float = Field(..., ge=0)
+
+class ActiveMinutesResponse(BaseModel):
+    status: str
+    total_active_minutes: float
+    average_active_minutes: float
+    period_days: int
+    daily_active_minutes: List[ActiveMinutesData]
+    start_date: str
+    end_date: str
+    message: Optional[str] = None
+
+
+class SpeedData(BaseModel):
+    timestamp: str
+    speed_mps: float = Field(..., ge=0, description="Speed in meters per second")
+    speed_kmh: float = Field(..., ge=0, description="Speed in km/h")
+
+class SpeedResponse(BaseModel):
+    status: str
+    max_speed_kmh: Optional[float] = None
+    average_speed_kmh: Optional[float] = None
+    measurements_count: int
+    speeds: List[SpeedData]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
+
+
+class HydrationData(BaseModel):
+    timestamp: str
+    volume_liters: float = Field(..., ge=0)
+
+class HydrationResponse(BaseModel):
+    status: str
+    total_liters: float
+    average_liters_per_day: float
+    measurements_count: int
+    entries: List[HydrationData]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
+
+
+class NutritionData(BaseModel):
+    timestamp: str
+    calories: Optional[float] = None
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
+    fiber_g: Optional[float] = None
+    sugar_g: Optional[float] = None
+    sodium_mg: Optional[float] = None
+    meal_type: Optional[str] = None
+
+class NutritionResponse(BaseModel):
+    status: str
+    total_calories: float
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    entries_count: int
+    entries: List[NutritionData]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
+
+
+class OxygenSaturationData(BaseModel):
+    timestamp: str
+    spo2_percent: float = Field(..., ge=0, le=100)
+
+class OxygenSaturationResponse(BaseModel):
+    status: str
+    min_spo2: Optional[float] = None
+    max_spo2: Optional[float] = None
+    average_spo2: Optional[float] = None
+    measurements_count: int
+    readings: List[OxygenSaturationData]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
+
+
+class BodyTemperatureData(BaseModel):
+    timestamp: str
+    temperature_celsius: float
+    temperature_fahrenheit: float
+
+class BodyTemperatureResponse(BaseModel):
+    status: str
+    average_temp_celsius: Optional[float] = None
+    min_temp_celsius: Optional[float] = None
+    max_temp_celsius: Optional[float] = None
+    measurements_count: int
+    readings: List[BodyTemperatureData]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
+
+
+class HeightResponse(BaseModel):
+    status: str
+    height_meters: Optional[float] = None
+    height_cm: Optional[float] = None
+    height_feet_inches: Optional[str] = None
+    last_updated: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
+
+
+class MoveMinutesData(BaseModel):
+    date: str
+    move_minutes: float = Field(..., ge=0)
+
+class MoveMinutesResponse(BaseModel):
+    status: str
+    total_move_minutes: float
+    average_move_minutes: float
+    period_days: int
+    daily_move_minutes: List[MoveMinutesData]
+    start_date: str
+    end_date: str
+    message: Optional[str] = None
+
+
+class PowerData(BaseModel):
+    timestamp: str
+    watts: float = Field(..., ge=0)
+
+class PowerResponse(BaseModel):
+    status: str
+    average_watts: Optional[float] = None
+    max_watts: Optional[float] = None
+    measurements_count: int
+    readings: List[PowerData]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
+
+
+class FullHealthDataResponse(BaseModel):
+    """Complete response with every available Google Fit data type."""
+    status: str
+    # Activity
+    steps: Optional[dict] = None
+    distance: Optional[dict] = None
+    calories: Optional[dict] = None
+    active_minutes: Optional[dict] = None
+    move_minutes: Optional[dict] = None
+    speed: Optional[dict] = None
+    power: Optional[dict] = None
+    # Body
+    heart_rate: Optional[dict] = None
+    blood_pressure: Optional[dict] = None
+    weight: Optional[dict] = None
+    height: Optional[dict] = None
+    body_temperature: Optional[dict] = None
+    oxygen_saturation: Optional[dict] = None
+    # Lifestyle
+    sleep: Optional[dict] = None
+    hydration: Optional[dict] = None
+    nutrition: Optional[dict] = None
+    timestamp: str

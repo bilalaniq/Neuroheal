@@ -1,290 +1,285 @@
-# Backend API - Migraine Classifier
+# 🧠 Migraine Classifier API
 
-FastAPI backend with online learning capabilities for real-time model updates.
+> A FastAPI backend that pulls real-time health data from Google Fit and your connected devices — built to power a migraine classification model.
 
-## Features
+---
 
-- **RESTful API** for migraine predictions
-- **Online Learning**: Real-time model updates with user feedback
-- **Experience Replay**: Prevents catastrophic forgetting
-- **Confidence-based Updates**: Only updates when model is uncertain
-- **GCS Integration**: Automatic model saving to Google Cloud Storage
-- **Cloud Run Ready**: Docker containerized for easy deployment
+## 📋 Table of Contents
 
-## Setup
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Setup](#setup)
+- [API Endpoints](#api-endpoints)
+- [Health Data Status](#health-data-status)
+- [Device Requirements](#device-requirements)
+- [Project Structure](#project-structure)
+- [Roadmap](#roadmap)
 
-### Local Development
+---
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Overview
 
-2. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings
-   ```
+This backend connects to the **Google Fit API** using OAuth 2.0 to retrieve real health data from your Xiaomi phone (and future wearables). It exposes clean REST endpoints for every health metric — steps, calories, sleep, heart rate, SpO2, and more — ready to feed into a migraine prediction model.
 
-3. **Download model artifacts:**
+When a metric requires a smartwatch and none is connected, the API responds with clear setup instructions rather than a generic error.
 
-   If using GCS:
-   ```bash
-   export GCS_BUCKET_NAME=your-bucket-name
-   python -c "from cloud.gcs_utils import GCSModelManager; \
-     m = GCSModelManager('$GCS_BUCKET_NAME'); \
-     m.download_model(local_dir='artifacts')"
-   ```
+---
 
-   Or copy local artifacts:
-   ```bash
-   mkdir -p artifacts
-   cp ../cloud/model.pt artifacts/
-   cp ../cloud/scaler.pkl artifacts/
-   cp ../cloud/label_encoder.pkl artifacts/
-   ```
+## ✨ Features
 
-4. **Run the server:**
-   ```bash
-   uvicorn main:app --reload --port 8080
-   ```
+- 🔐 **OAuth 2.0** authentication with automatic token refresh
+- 📱 **Xiaomi phone support** — fixes the cumulative step count sync issue with a two-strategy fallback
+- ⌚ **Watch-ready** — all watch-dependent endpoints exist now; data flows in automatically once a device is connected
+- 🩺 **16 health metrics** across activity, body, and lifestyle categories
+- 💬 **Smart empty responses** — tells you exactly what device you need when data is missing
+- 🔄 **Online learning ready** — model architecture supports real-time updates from user feedback
+- ☁️ **Cloud Run ready** — Docker containerized for easy GCP deployment
 
-5. **Test the API:**
-   ```bash
-   # Health check
-   curl http://localhost:8080/health
+---
 
-   # Make a prediction
-   curl -X POST http://localhost:8080/predict \
-     -H "Content-Type: application/json" \
-     -d '{
-       "age": 35,
-       "duration": 2,
-       "frequency": 5,
-       "location": 1,
-       "character": 1,
-       "intensity": 3,
-       "nausea": 1,
-       "vomit": 1,
-       "phonophobia": 1,
-       "photophobia": 1,
-       "visual": 0,
-       "sensory": 0,
-       "dysphasia": 0,
-       "dysarthria": 0,
-       "vertigo": 0,
-       "tinnitus": 0,
-       "hypoacusis": 0,
-       "diplopia": 0,
-       "defect": 0,
-       "ataxia": 0,
-       "conscience": 0,
-       "paresthesia": 0,
-       "dpf": 1
-     }'
-   ```
+## 🛠 Tech Stack
 
-### Docker Deployment
+| Layer | Technology |
+|---|---|
+| API Framework | FastAPI + Uvicorn |
+| Health Data | Google Fit REST API |
+| Auth | Google OAuth 2.0 |
+| ML Model | PyTorch (MigraineClassifier) |
+| Validation | Pydantic v2 |
+| Cloud | Google Cloud Run + GCS + BigQuery |
+| Language | Python 3.13 |
 
-1. **Build the image:**
-   ```bash
-   docker build -t migraine-classifier .
-   ```
+---
 
-2. **Run locally:**
-   ```bash
-   docker run -p 8080:8080 \
-     -e USE_GCS=true \
-     -e GCS_BUCKET_NAME=your-bucket-name \
-     migraine-classifier
-   ```
+## ⚙️ Setup
 
-### Cloud Run Deployment
+### 1. Install dependencies
 
-1. **Build and push to Container Registry:**
-   ```bash
-   export PROJECT_ID=your-project-id
-   export REGION=us-central1
-
-   # Build with Cloud Build
-   gcloud builds submit --tag gcr.io/$PROJECT_ID/migraine-classifier
-
-   # Or build and push manually
-   docker build -t gcr.io/$PROJECT_ID/migraine-classifier .
-   docker push gcr.io/$PROJECT_ID/migraine-classifier
-   ```
-
-2. **Deploy to Cloud Run:**
-   ```bash
-   gcloud run deploy migraine-classifier \
-     --image gcr.io/$PROJECT_ID/migraine-classifier \
-     --platform managed \
-     --region $REGION \
-     --allow-unauthenticated \
-     --memory 2Gi \
-     --cpu 2 \
-     --set-env-vars USE_GCS=true,GCS_BUCKET_NAME=your-bucket-name
-   ```
-
-3. **Get the service URL:**
-   ```bash
-   gcloud run services describe migraine-classifier \
-     --platform managed \
-     --region $REGION \
-     --format 'value(status.url)'
-   ```
-
-## API Endpoints
-
-### `GET /health`
-Health check endpoint.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "model_loaded": true,
-  "version": "1.0.0"
-}
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### `POST /predict`
-Make a migraine classification prediction.
+### 2. Add Google credentials
 
-**Request Body:**
-```json
-{
-  "age": 35,
-  "duration": 2,
-  "frequency": 5,
-  "location": 1,
-  "character": 1,
-  "intensity": 3,
-  "nausea": 1,
-  "vomit": 1,
-  "phonophobia": 1,
-  "photophobia": 1,
-  "visual": 0,
-  "sensory": 0,
-  "dysphasia": 0,
-  "dysarthria": 0,
-  "vertigo": 0,
-  "tinnitus": 0,
-  "hypoacusis": 0,
-  "diplopia": 0,
-  "defect": 0,
-  "ataxia": 0,
-  "conscience": 0,
-  "paresthesia": 0,
-  "dpf": 1
-}
+Place your `credentials.json` (from Google Cloud Console) in the backend folder.
+
+```
+backend/
+├── credentials.json   ← put it here
+├── main.py
+├── google_fit_service.py
+└── ...
 ```
 
-**Response:**
-```json
-{
-  "prediction": "Migraine without aura",
-  "confidence": 0.85,
-  "all_probabilities": {
-    "No migraine": 0.02,
-    "Migraine without aura": 0.85,
-    "Typical aura with migraine": 0.10,
-    ...
-  },
-  "timestamp": "2025-11-15T12:34:56"
-}
+> **Get credentials:** Google Cloud Console → APIs & Services → Credentials → Create OAuth 2.0 Client ID (Desktop app) → Download JSON
+
+### 3. Configure environment
+
+```bash
+cp .env.example .env
 ```
 
-### `POST /update`
-Update the model with user-confirmed data (online learning).
+Key settings in `.env`:
 
-**Request Body:**
-```json
-{
-  "features": { /* same as predict */ },
-  "true_label": "Migraine without aura",
-  "force_update": false
-}
+```env
+USE_GOOGLE_FIT=true
+GOOGLE_FIT_CREDENTIALS_FILE=credentials.json
+GOOGLE_FIT_TOKEN_FILE=token.pickle
+GEMINI_API_KEY=your_key_here
+USE_BIGQUERY=false
+USE_GCS=false
 ```
 
-**Response:**
-```json
-{
-  "status": "success",
-  "updated": true,
-  "loss": 0.234,
-  "confidence": 0.75,
-  "update_count": 42
-}
-```
+### 4. Run the server
 
-### `GET /metrics`
-Get online learning metrics.
-
-**Response:**
-```json
-{
-  "total_updates": 42,
-  "skipped_updates": 15,
-  "replay_buffer_size": 42,
-  "avg_recent_loss": 0.189,
-  "learning_rate": 0.0001
-}
-```
-
-## Configuration
-
-Environment variables (see `.env.example`):
-
-- `USE_GCS`: Enable GCS integration (true/false)
-- `GCS_BUCKET_NAME`: GCS bucket name
-- `GCS_MODEL_PATH`: Path to model in bucket
-- `ONLINE_LEARNING_RATE`: Learning rate for online updates (default: 0.0001)
-- `REPLAY_BUFFER_SIZE`: Experience replay buffer size (default: 100)
-- `REPLAY_FREQUENCY`: Replay every N updates (default: 10)
-- `CONFIDENCE_THRESHOLD`: Only update if confidence < threshold (default: 0.8)
-- `SAVE_FREQUENCY`: Save to GCS every N updates (default: 5)
-
-## Online Learning Behavior
-
-1. **User submits data** → API makes prediction
-2. **User confirms/corrects** → Triggers `/update` endpoint
-3. **Confidence check**: Only updates if confidence < 0.8 (configurable)
-4. **Backward pass**: Single-sample gradient update
-5. **Experience replay**: Every 10 updates, replays random samples from buffer
-6. **Auto-save**: Every 5 updates, saves to GCS in background
-
-## Development
-
-Run with auto-reload:
 ```bash
 uvicorn main:app --reload --port 8080
 ```
 
-API documentation (auto-generated):
-- Swagger UI: http://localhost:8080/docs
-- ReDoc: http://localhost:8080/redoc
+On first run, a browser will open for Google OAuth login. Accept all permissions. A `token.pickle` file will be saved for future runs.
 
-## Testing
+### 5. Test it
 
-Example test workflow:
 ```bash
-# 1. Make prediction
-curl -X POST http://localhost:8080/predict -H "Content-Type: application/json" -d @test_input.json
-
-# 2. Update model
-curl -X POST http://localhost:8080/update -H "Content-Type: application/json" -d @test_update.json
-
-# 3. Check metrics
-curl http://localhost:8080/metrics
+curl http://localhost:8080/health
+curl "http://localhost:8080/health/full?days=7"
 ```
 
-## Architecture
+---
+
+## 📡 API Endpoints
+
+### Core
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | API health check |
+| `GET` | `/health` | API health check |
+| `GET` | `/health/full?days=N` | **All metrics in one call** |
+| `GET` | `/health/all?days=N` | Legacy combined endpoint |
+
+### Activity
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health/steps?days=N` | Daily step counts |
+| `GET` | `/health/distance?days=N` | Distance in km/miles |
+| `GET` | `/health/calories?days=N` | Calories burned |
+| `GET` | `/health/active-minutes?days=N` | Active minutes per day |
+| `GET` | `/health/move-minutes?days=N` | Heart/move minutes |
+| `GET` | `/health/speed?days=N` | Speed readings (km/h) |
+| `GET` | `/health/power?days=N` | Cycling power (watts) |
+
+### Body Metrics
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health/heart-rate?days=N` | Heart rate BPM |
+| `GET` | `/health/blood-pressure?days=N` | Systolic / Diastolic |
+| `GET` | `/health/weight?days=N` | Weight (kg + lbs) |
+| `GET` | `/health/height` | Height (m, cm, ft/in) |
+| `GET` | `/health/body-temperature?days=N` | Temp (°C + °F) |
+| `GET` | `/health/oxygen-saturation?days=N` | SpO2 % |
+
+### Lifestyle
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health/sleep?days=N` | Sleep stages + schedule |
+| `GET` | `/health/hydration?days=N` | Water intake (liters) |
+| `GET` | `/health/nutrition?days=N` | Calories, macros per meal |
+
+### Debug
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health/debug` | All data sources + today's steps |
+| `GET` | `/health/test-steps?days=N` | Detailed step debugging |
+| `GET` | `/health/today` | Today's steps specifically |
+
+---
+
+## 📊 Health Data Status
+
+Current status with a Xiaomi phone (no watch connected):
+
+| Metric | Status | Source |
+|---|---|---|
+| Steps | ✅ Live | Xiaomi phone pedometer |
+| Distance | ✅ Live | Derived from steps |
+| Calories | ✅ Live | Derived from steps |
+| Active Minutes | ✅ Live | Google Fit derived |
+| Speed | ✅ Live | Xiaomi phone GPS |
+| Weight | ✅ Live | Mi Scale (synced) |
+| Sleep | ⏳ Waiting | Needs Mi Fitness sync |
+| Heart Rate | ⌚ Watch needed | Requires smartwatch |
+| SpO2 | ⌚ Watch needed | Requires smartwatch |
+| Body Temperature | ⌚ Watch needed | Requires smartwatch |
+| Blood Pressure | ⌚ Device needed | Requires BP monitor |
+| Height | 📝 Manual entry | Enter in Google Fit app |
+| Hydration | 📝 Manual entry | Log in Google Fit app |
+| Nutrition | 📝 Manual entry | Connect MyFitnessPal |
+| Power | 🚴 Cycling sensor | Requires power meter |
+
+---
+
+## ⌚ Device Requirements
+
+When a metric has no data, the API tells you exactly what to get:
+
+```json
+{
+  "status": "success",
+  "measurements_count": 0,
+  "message": "No heart rate data. A smartwatch/band synced to Google Fit is required.",
+  "watch_required": true,
+  "recommended_device": "Xiaomi Smart Band 9 Pro / Fitbit Charge 6 / Galaxy Watch",
+  "setup_instructions": "1. Buy a smartwatch. 2. Install Mi Fitness or Fitbit app. 3. Connect to Google Fit via app settings."
+}
+```
+
+### Recommended devices by metric
+
+| Metric | Recommended Device | Approx. Cost |
+|---|---|---|
+| Heart rate, SpO2, Temperature | Xiaomi Smart Band 9 Pro | ~$50 |
+| Weight | Xiaomi Mi Scale 2 | ~$20 |
+| Blood pressure | Omron blood pressure monitor | ~$40 |
+| Cycling power | Wahoo / Garmin power meter | ~$200+ |
+
+> **Zero code changes needed.** Once a device syncs to Google Fit, all endpoints automatically return real data.
+
+---
+
+## 🗂 Project Structure
 
 ```
-Frontend → FastAPI → OnlineLearningManager → PyTorch Model
-                ↓
-            GCS (periodic saves)
+backend/
+├── main.py                  # FastAPI app, all route definitions
+├── google_fit_service.py    # Google Fit API integration (all 16 metrics)
+├── schemas.py               # Pydantic request/response models
+├── model.py                 # PyTorch MigraineClassifier neural network
+├── config.py                # Environment settings
+├── credentials.json         # Google OAuth credentials (not committed)
+├── token.pickle             # Saved OAuth token (not committed)
+├── requirements.txt         # Python dependencies
+└── Dockerfile               # Cloud Run container
 ```
 
-The backend maintains the model in memory and performs single-sample gradient updates when users provide feedback. Experience replay prevents catastrophic forgetting by periodically replaying past examples.
+### Model Architecture
+
+```
+Input (50 features)
+    ↓
+Linear(50 → 64) + BatchNorm + ReLU + Dropout
+    ↓
+Linear(64 → 32) + BatchNorm + ReLU + Dropout
+    ↓
+Linear(32 → 8)
+    ↓
+Output: 8 migraine classes
+```
+
+**Classes:**
+- No migraine
+- Migraine without aura
+- Migraine with aura
+- Typical aura with migraine
+- Typical aura without migraine
+- Familial hemiplegic migraine
+- Basilar-type aura
+- Other
+
+---
+
+## 🗺 Roadmap
+
+- [x] Google Fit OAuth integration
+- [x] Steps with Xiaomi cumulative fix
+- [x] 16 health metric endpoints
+- [x] Watch-required smart responses
+- [x] Weight from Mi Scale
+- [ ] Re-authenticate token for body temperature / SpO2 / blood pressure scopes
+- [ ] Connect smartwatch for heart rate + SpO2
+- [ ] Sleep data sync from Mi Fitness
+- [ ] Frontend dashboard
+- [ ] Migraine classifier model integration
+- [ ] Online learning from user feedback
+- [ ] BigQuery logging
+- [ ] Cloud Run deployment
+
+---
+
+## 🔒 Notes
+
+- `credentials.json` and `token.pickle` are **never committed** to version control
+- If you get 403 errors, delete `token.pickle` and restart — a fresh OAuth flow will request all required scopes
+- The Xiaomi step sync uses a two-strategy fallback: delta aggregate first, raw cumulative dataset second
+
+---
+
+*Built for migraine pattern research and personal health tracking.*
