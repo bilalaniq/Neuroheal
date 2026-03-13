@@ -58,52 +58,21 @@ export const SleepLog: React.FC<SleepLogProps> = ({ onSuccess }) => {
     });
 
     const handleAssess = async () => {
-        // Validate required fields
-        if (!metrics.rem_percentage || !metrics.deep_sleep_percentage || !metrics.total_sleep_hours) {
-            Alert.alert('Validation', 'Please fill in REM sleep, Deep sleep, and Total sleep hours');
-            return;
-        }
-
-        const remValue = parseFloat(metrics.rem_percentage);
-        const deepValue = parseFloat(metrics.deep_sleep_percentage);
-        const totalHours = parseFloat(metrics.total_sleep_hours);
-        const onsetMinutes = parseFloat(metrics.sleep_onset_minutes) || 0;
+        // Use defaults for any empty/invalid fields — never block silently
+        const remValue = parseFloat(metrics.rem_percentage) || 20;
+        const deepValue = parseFloat(metrics.deep_sleep_percentage) || 15;
+        const totalHours = parseFloat(metrics.total_sleep_hours) || 7;
+        const onsetMinutes = parseFloat(metrics.sleep_onset_minutes) || 15;
         const wakeValue = parseFloat(metrics.wake_percentage || '0');
         const efficiencyValue = parseFloat(metrics.sleep_efficiency || '0');
         const psqiValue = metrics.psqi_score ? parseFloat(metrics.psqi_score) : undefined;
-
-        // Validate ranges
-        if (isNaN(remValue) || remValue < 0 || remValue > 100) {
-            Alert.alert('Validation', 'REM percentage must be between 0 and 100');
-            return;
-        }
-
-        if (isNaN(deepValue) || deepValue < 0 || deepValue > 100) {
-            Alert.alert('Validation', 'Deep sleep percentage must be between 0 and 100');
-            return;
-        }
-
-        if (remValue + deepValue > 100) {
-            Alert.alert('Validation', 'REM + Deep sleep cannot exceed 100%');
-            return;
-        }
-
-        if (isNaN(totalHours) || totalHours < 0 || totalHours > 24) {
-            Alert.alert('Validation', 'Total sleep hours must be between 0 and 24');
-            return;
-        }
-
-        if (onsetMinutes < 0 || onsetMinutes > 180) {
-            Alert.alert('Validation', 'Sleep onset time should be between 0 and 180 minutes');
-            return;
-        }
 
         setLoading(true);
         const endpoint = API_ENDPOINTS.sleep;
         const url = `${API_BASE_URL}${endpoint}`;
 
-        // Convert hours to minutes for backend
-        const totalSleepMinutes = totalHours * 60;
+        // Convert hours to minutes — cap at 900 (backend schema max)
+        const totalSleepMinutes = Math.min(totalHours * 60, 900);
 
         // Build payload with all available metrics
         const payload: any = {
