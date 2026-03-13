@@ -1,0 +1,41 @@
+{
+  "training_date": "2026-03-13T18:04:24.723195",
+  "model_type": "LogisticRegression",
+  "test_accuracy": 0.725,
+  "confusion_matrix": [
+    [
+      21,
+      6
+    ],
+    [
+      5,
+      8
+    ]
+  ],
+  "total_samples": 197,
+  "migraine_days": 66,
+  "no_migraine_days": 131,
+  "feature_count": 26,
+  "top_5_triggers": [
+    {
+      "feature": "Liquor or spirits",
+      "coefficient": 0.6867399142098989
+    },
+    {
+      "feature": "Bananas",
+      "coefficient": 0.461674387332625
+    },
+    {
+      "feature": "Nightshade vegetables (tomatoes, eggplants, potatoes, peppers)",
+      "coefficient": 0.347319314970068
+    },
+    {
+      "feature": "Red wine",
+      "coefficient": 0.30346758368227544
+    },
+    {
+      "feature": "Hot and humid weather",
+      "coefficient": 0.29222185673716033
+    }
+  ]
+}

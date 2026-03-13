@@ -1,0 +1,27 @@
+feature,coefficient
+Liquor or spirits,0.6867399142098989
+Bananas,0.461674387332625
+"Nightshade vegetables (tomatoes, eggplants, potatoes, peppers)",0.347319314970068
+Red wine,0.30346758368227544
+Hot and humid weather,0.29222185673716033
+Missed a meal,0.28854743152295315
+Citrus fruit or juice,0.19205322318753384
+Bright or flashing Lights,0.19129366209766854
+Prev_day_migraine,0.18442857059730328
+Weekend,0.184081129115032
+Perfume or strong odors,0.14887208092892082
+Dehydration,0.13995910217305085
+Changing weather,0.07471873535411946
+Loud sounds,0.046377457004553126
+Physical exertion,0.010605938768032445
+Chocolate,-0.00016525493419171147
+"Smoked or cured meat (e.g., hot dogs)",-0.009796294672237851
+Aged or blue cheese,-0.03307498989010956
+Lack of sleep,-0.04730260277031911
+Post-stress letdown,-0.053465267798683394
+Caffeine,-0.08716080975073597
+Sugar and Sweets,-0.09337319420500206
+Beer,-0.18785747344167256
+Cold air exposure,-0.21579123692127827
+Stress,-0.2958826566100195
+Overslept,-0.30520965439561576

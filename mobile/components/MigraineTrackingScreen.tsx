@@ -22,6 +22,37 @@ interface MigraineTrackingScreenProps {
   };
 }
 
+interface SymptomFormData {
+  age: string;
+  duration: string;
+  frequency: string;
+  location: string;
+  character: string;
+  intensity: string;
+  nausea: boolean;
+  vomit: boolean;
+  phonophobia: boolean;
+  photophobia: boolean;
+  visual: string;
+  sensory: boolean;
+  dysphasia: boolean;
+  dysarthria: boolean;
+  vertigo: boolean;
+  tinnitus: boolean;
+  hypoacusis: boolean;
+  diplopia: boolean;
+  defect: boolean;
+  conscience: boolean;
+  paresthesia: boolean;
+  dpf: boolean;
+}
+
+interface PredictionResult {
+  predicted_class: string;
+  confidence: number;
+}
+
+const API_BASE_URL = 'http://localhost:8080';
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width, 448);
 
@@ -47,6 +78,36 @@ export function MigraineTrackingScreen({ navigation }: MigraineTrackingScreenPro
   const [aiInsights, setAiInsights] = useState<string>('');
   const [predictionResult, setPredictionResult] = useState<{ prediction: string; confidence: number } | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+
+  // Model 1 - Symptom Classification
+  const [showDetailedForm, setShowDetailedForm] = useState(false);
+  const [classificationResult, setClassificationResult] = useState<PredictionResult | null>(null);
+  const [classifyLoading, setClassifyLoading] = useState(false);
+  const [formData, setFormData] = useState<SymptomFormData>({
+    age: '',
+    duration: '',
+    frequency: '',
+    location: '',
+    character: '',
+    intensity: '',
+    nausea: false,
+    vomit: false,
+    phonophobia: false,
+    photophobia: false,
+    visual: '',
+    sensory: false,
+    dysphasia: false,
+    dysarthria: false,
+    vertigo: false,
+    tinnitus: false,
+    hypoacusis: false,
+    diplopia: false,
+    defect: false,
+    conscience: false,
+    paresthesia: false,
+    dpf: false,
+  });
+
   const { darkMode } = useTheme();
   const { userData, updateIntegrations } = useUser();
 
@@ -92,6 +153,58 @@ export function MigraineTrackingScreen({ navigation }: MigraineTrackingScreenPro
       },
     })
   ).current;
+
+  const handleClassifySymptoms = async () => {
+    if (!formData.age || !formData.duration || !formData.frequency || !formData.location || !formData.character || !formData.intensity || formData.visual === '') {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setClassifyLoading(true);
+    try {
+      const payload = {
+        age: parseInt(formData.age),
+        duration: parseInt(formData.duration),
+        frequency: parseInt(formData.frequency),
+        location: parseInt(formData.location),
+        character: parseInt(formData.character),
+        intensity: parseInt(formData.intensity),
+        nausea: formData.nausea ? 1 : 0,
+        vomit: formData.vomit ? 1 : 0,
+        phonophobia: formData.phonophobia ? 1 : 0,
+        photophobia: formData.photophobia ? 1 : 0,
+        visual: parseInt(formData.visual),
+        sensory: formData.sensory ? 1 : 0,
+        dysphasia: formData.dysphasia ? 1 : 0,
+        dysarthria: formData.dysarthria ? 1 : 0,
+        vertigo: formData.vertigo ? 1 : 0,
+        tinnitus: formData.tinnitus ? 1 : 0,
+        hypoacusis: formData.hypoacusis ? 1 : 0,
+        diplopia: formData.diplopia ? 1 : 0,
+        defect: formData.defect ? 1 : 0,
+        conscience: formData.conscience ? 1 : 0,
+        paresthesia: formData.paresthesia ? 1 : 0,
+        dpf: formData.dpf ? 1 : 0,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/predict/symptom-type`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClassificationResult(data);
+      } else {
+        alert('Error: Could not classify symptoms');
+      }
+    } catch (error) {
+      alert('Network error: ' + error);
+    } finally {
+      setClassifyLoading(false);
+    }
+  };
 
   const symptoms = [
     'Aura',
@@ -189,6 +302,147 @@ export function MigraineTrackingScreen({ navigation }: MigraineTrackingScreenPro
   const handleDismiss = () => {
     navigation.navigate('Main');
   };
+
+  // Show classification result
+  if (classificationResult) {
+    return (
+      <View style={[styles.container, darkMode && styles.containerDark]}>
+        <View style={styles.header}>
+          <Pressable onPress={() => setClassificationResult(null)}>
+            <Ionicons name="chevron-back" size={24} color={darkMode ? '#d4e8e0' : '#2d4a42'} />
+          </Pressable>
+          <Text style={[styles.headerTitle, darkMode && styles.textDark]}>Classification Result</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={[styles.resultCard, darkMode && styles.resultCardDark]}>
+            <Ionicons name="checkmark-circle" size={60} color="#10b981" style={{ marginBottom: 16 }} />
+            <Text style={[styles.resultType, darkMode && styles.textDark]}>{classificationResult.predicted_class}</Text>
+            <Text style={[styles.resultConfidence, darkMode && styles.successSubtitleDark]}>
+              Confidence: {(classificationResult.confidence * 100).toFixed(1)}%
+            </Text>
+            <Pressable
+              onPress={() => {
+                setClassificationResult(null);
+                setFormData({
+                  age: '', duration: '', frequency: '', location: '', character: '', intensity: '',
+                  nausea: false, vomit: false, phonophobia: false, photophobia: false, visual: '',
+                  sensory: false, dysphasia: false, dysarthria: false, vertigo: false, tinnitus: false,
+                  hypoacusis: false, diplopia: false, defect: false, conscience: false, paresthesia: false, dpf: false,
+                });
+              }}
+              style={[styles.submitButton, { marginTop: 24 }]}
+            >
+              <Ionicons name="add" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.submitText}>Log Another</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Show detailed classification form
+  if (showDetailedForm) {
+    return (
+      <View style={[styles.container, darkMode && styles.containerDark]}>
+        <View style={styles.header}>
+          <Pressable onPress={() => setShowDetailedForm(false)}>
+            <Ionicons name="chevron-back" size={24} color={darkMode ? '#d4e8e0' : '#2d4a42'} />
+          </Pressable>
+          <Text style={[styles.headerTitle, darkMode && styles.textDark]}>Detailed Classification</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Text style={[styles.sectionLabel, darkMode && styles.textDark]}>Age</Text>
+          <TextInput style={[styles.textInput, darkMode && styles.textInputDark]} placeholder="Years" placeholderTextColor={darkMode ? '#7a9f94' : '#999'} keyboardType="number-pad" value={formData.age} onChangeText={(text) => setFormData({ ...formData, age: text })} />
+
+          <Text style={[styles.sectionLabel, darkMode && styles.textDark]}>Duration (days)</Text>
+          <TextInput style={[styles.textInput, darkMode && styles.textInputDark]} placeholder="Days" placeholderTextColor={darkMode ? '#7a9f94' : '#999'} keyboardType="number-pad" value={formData.duration} onChangeText={(text) => setFormData({ ...formData, duration: text })} />
+
+          <Text style={[styles.sectionLabel, darkMode && styles.textDark]}>Frequency (per month)</Text>
+          <TextInput style={[styles.textInput, darkMode && styles.textInputDark]} placeholder="Per month" placeholderTextColor={darkMode ? '#7a9f94' : '#999'} keyboardType="number-pad" value={formData.frequency} onChangeText={(text) => setFormData({ ...formData, frequency: text })} />
+
+          <Text style={[styles.sectionLabel, darkMode && styles.textDark]}>Location</Text>
+          <View style={styles.optionRow}>
+            {['1', '2'].map(val => (
+              <Pressable key={val} onPress={() => setFormData({ ...formData, location: val })} style={[styles.optionButton, formData.location === val && styles.optionButtonSelected, darkMode && styles.optionButtonDark, formData.location === val && darkMode && styles.optionButtonSelectedDark]}>
+                <Text style={[styles.optionText, formData.location === val && styles.optionTextSelected]}>{val === '1' ? 'One Side' : 'Both Sides'}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={[styles.sectionLabel, darkMode && styles.textDark]}>Pain Type</Text>
+          <View style={styles.optionRow}>
+            {['1', '2'].map(val => (
+              <Pressable key={val} onPress={() => setFormData({ ...formData, character: val })} style={[styles.optionButton, formData.character === val && styles.optionButtonSelected, darkMode && styles.optionButtonDark, formData.character === val && darkMode && styles.optionButtonSelectedDark]}>
+                <Text style={[styles.optionText, formData.character === val && styles.optionTextSelected]}>{val === '1' ? 'Throbbing' : 'Pressing'}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={[styles.sectionLabel, darkMode && styles.textDark]}>Intensity</Text>
+          <View style={styles.optionRow}>
+            {['1', '2', '3'].map(val => (
+              <Pressable key={val} onPress={() => setFormData({ ...formData, intensity: val })} style={[styles.optionButton, formData.intensity === val && styles.optionButtonSelected, darkMode && styles.optionButtonDark, formData.intensity === val && darkMode && styles.optionButtonSelectedDark]}>
+                <Text style={[styles.optionText, formData.intensity === val && styles.optionTextSelected]}>{val === '1' ? 'Mild' : val === '2' ? 'Moderate' : 'Severe'}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={[styles.sectionLabel, darkMode && styles.textDark]}>Visual Disturbances</Text>
+          <View style={styles.optionRow}>
+            {['0', '1', '2'].map(val => (
+              <Pressable key={val} onPress={() => setFormData({ ...formData, visual: val })} style={[styles.optionButton, formData.visual === val && styles.optionButtonSelected, darkMode && styles.optionButtonDark, formData.visual === val && darkMode && styles.optionButtonSelectedDark]}>
+                <Text style={[styles.optionText, formData.visual === val && styles.optionTextSelected]}>{val === '0' ? 'None' : val === '1' ? 'Mild' : 'Severe'}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Toggle buttons for yes/no questions */}
+          {[
+            { key: 'nausea', label: 'Nausea?' },
+            { key: 'vomit', label: 'Vomited?' },
+            { key: 'phonophobia', label: 'Sound sensitive?' },
+            { key: 'photophobia', label: 'Light sensitive?' },
+            { key: 'sensory', label: 'Sensory aura?' },
+            { key: 'dysphasia', label: 'Difficulty finding words?' },
+            { key: 'dysarthria', label: 'Slurred speech?' },
+            { key: 'vertigo', label: 'Dizziness?' },
+            { key: 'tinnitus', label: 'Ringing ears?' },
+            { key: 'hypoacusis', label: 'Reduced hearing?' },
+            { key: 'diplopia', label: 'Double vision?' },
+            { key: 'defect', label: 'Visual field defect?' },
+            { key: 'conscience', label: 'Lost consciousness?' },
+            { key: 'paresthesia', label: 'Numbness/tingling?' },
+            { key: 'dpf', label: 'Family history?' },
+          ].map(({ key, label }) => (
+            <View key={key} style={styles.toggleRow}>
+              <Text style={[styles.sectionLabel, darkMode && styles.textDark, { marginBottom: 0 }]}>{label}</Text>
+              <Pressable onPress={() => setFormData({ ...formData, [key as keyof SymptomFormData]: !(formData[key as keyof SymptomFormData]) })} style={[styles.toggleButton, (formData[key as keyof SymptomFormData]) && styles.toggleButtonActive, darkMode && styles.toggleButtonDark, (formData[key as keyof SymptomFormData]) && darkMode && styles.toggleButtonActiveDark]}>
+                <Text style={styles.toggleText}>{(formData[key as keyof SymptomFormData]) ? '✓' : '○'}</Text>
+              </Pressable>
+            </View>
+          ))}
+
+          <Pressable
+            onPress={handleClassifySymptoms}
+            disabled={classifyLoading}
+            style={[styles.submitButton, classifyLoading && styles.submitButtonDisabled]}
+          >
+            {classifyLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <>
+                <Ionicons name="analytics" size={20} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.submitText}>Classify Symptoms</Text>
+              </>
+            )}
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
+  }
 
   if (showSuccess) {
     return (
@@ -417,6 +671,20 @@ export function MigraineTrackingScreen({ navigation }: MigraineTrackingScreenPro
             <Text style={[styles.checkboxLabel, darkMode && styles.textDark]}>
               Enable AI pattern analysis
             </Text>
+          </Pressable>
+
+          {/* Detailed Classification Button */}
+          <Pressable
+            onPress={() => setShowDetailedForm(true)}
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              pressed && styles.submitButtonPressed,
+            ]}
+          >
+            <View style={styles.submitButtonContent}>
+              <Ionicons name="flask" size={28} color="#a8d5c4" />
+              <Text style={styles.secondaryButtonText}>Detailed Type Classification</Text>
+            </View>
           </Pressable>
 
           {/* Submit Button */}
@@ -1033,5 +1301,150 @@ const styles = StyleSheet.create({
   modalOptionTextSelected: {
     color: '#a8d5c4',
     fontWeight: '500',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#d4e8e0',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2d4a42',
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#2d4a42',
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: '#f0f5f3',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+    color: '#2d4a42',
+    borderWidth: 1,
+    borderColor: '#d4e8e0',
+  },
+  textInputDark: {
+    backgroundColor: '#253029',
+    borderColor: '#5a8f7f',
+    color: '#d4e8e0',
+  },
+  optionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  optionButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#d4e8e0',
+    backgroundColor: '#f0f5f3',
+    alignItems: 'center',
+  },
+  optionButtonDark: {
+    backgroundColor: '#253029',
+    borderColor: '#5a8f7f',
+  },
+  optionButtonSelected: {
+    backgroundColor: '#a8d5c4',
+    borderColor: '#059669',
+  },
+  optionButtonSelectedDark: {
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+  },
+  optionText: {
+    fontSize: 13,
+    color: '#2d4a42',
+    fontWeight: '500',
+  },
+  optionTextSelected: {
+    color: '#fff',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  toggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d4e8e0',
+    backgroundColor: '#f0f5f3',
+  },
+  toggleButtonDark: {
+    backgroundColor: '#253029',
+    borderColor: '#5a8f7f',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#10b981',
+    borderColor: '#059669',
+  },
+  toggleButtonActiveDark: {
+    backgroundColor: '#059669',
+  },
+  toggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2d4a42',
+  },
+  resultCard: {
+    backgroundColor: '#f0f5f3',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d4e8e0',
+  },
+  resultCardDark: {
+    backgroundColor: '#253029',
+    borderColor: '#5a8f7f',
+  },
+  resultType: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#10b981',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  resultConfidence: {
+    fontSize: 14,
+    color: '#7a9f94',
+  },
+  secondaryButton: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#f0f5f3',
+    borderWidth: 2,
+    borderColor: '#a8d5c4',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  secondaryButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#a8d5c4',
+    letterSpacing: 0.5,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
 });

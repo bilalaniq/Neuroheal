@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable, Share } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Pressable, Share, TextInput, Modal, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ModernHeader } from '@/components/ModernHeader';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
+import { API_BASE_URL } from '@/config/api';
 
 const { width } = Dimensions.get('window');
 const chartWidth = width - 40;
@@ -351,153 +352,372 @@ function AIInsightsPanel({ migraineDays, healthMetrics, darkMode }: {
   );
 }
 
+interface SymptomFormData {
+  age: string;
+  duration: string;
+  frequency: string;
+  location: string;
+  character: string;
+  intensity: string;
+  nausea: boolean;
+  vomit: boolean;
+  phonophobia: boolean;
+  photophobia: boolean;
+  visual: string;
+  sensory: boolean;
+  dysphasia: boolean;
+  dysarthria: boolean;
+  vertigo: boolean;
+  tinnitus: boolean;
+  hypoacusis: boolean;
+  diplopia: boolean;
+  defect: boolean;
+  conscience: boolean;
+  paresthesia: boolean;
+  dpf: boolean;
+}
+
+interface PredictionResult {
+  predicted_class: string;
+  confidence: number;
+  all_predictions?: Record<string, number>;
+}
+
+function ToggleButton({ value, onChange, label, darkMode }: { value: boolean; onChange: (v: boolean) => void; label: string; darkMode?: boolean }) {
+  return (
+    <View style={styles.toggleContainer}>
+      <Text style={[styles.toggleLabel, darkMode && styles.toggleLabelDark]}>{label}</Text>
+      <Pressable
+        onPress={() => onChange(!value)}
+        style={[
+          styles.toggleButton,
+          value && styles.toggleButtonActive,
+          darkMode && styles.toggleButtonDark,
+          value && darkMode && styles.toggleButtonActiveDark
+        ]}
+      >
+        <Text style={styles.toggleText}>{value ? '✓ Yes' : '○ No'}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function SelectButton({ value, onSelect, options, label, darkMode }: { value: string; onSelect: (v: string) => void; options: { label: string; value: string }[]; label: string; darkMode?: boolean }) {
+  const [modalVisible, setModalVisible] = React.useState(false);
+
+  return (
+    <View style={styles.selectContainer}>
+      <Text style={[styles.selectLabel, darkMode && styles.selectLabelDark]}>{label}</Text>
+      <Pressable
+        onPress={() => setModalVisible(true)}
+        style={[styles.selectButton, darkMode && styles.selectButtonDark]}
+      >
+        <Text style={[styles.selectButtonText, darkMode && styles.selectButtonTextDark]}>
+          {options.find(o => o.value === value)?.label || 'Select...'}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color={darkMode ? '#d4e8e0' : '#2d4a42'} />
+      </Pressable>
+
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+          <View style={[styles.modalContent, darkMode && styles.modalContentDark]}>
+            {options.map(option => (
+              <Pressable
+                key={option.value}
+                onPress={() => {
+                  onSelect(option.value);
+                  setModalVisible(false);
+                }}
+                style={[
+                  styles.modalOption,
+                  value === option.value && styles.modalOptionSelected,
+                  darkMode && styles.modalOptionDark
+                ]}
+              >
+                <Text style={[styles.modalOptionText, value === option.value && styles.modalOptionTextSelected, darkMode && styles.modalOptionTextDark]}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
 export default function MigraneTrackingScreen() {
   const router = useRouter();
   const { darkMode } = useTheme();
   const { userData } = useUser();
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<PredictionResult | null>(null);
 
-  // Generate mock data
-  const migraineDays = generateMockMigraineDays(30);
-  const healthMetrics = generateMockHealthMetrics(30);
+  const [formData, setFormData] = React.useState<SymptomFormData>({
+    age: '',
+    duration: '',
+    frequency: '',
+    location: '',
+    character: '',
+    intensity: '',
+    nausea: false,
+    vomit: false,
+    phonophobia: false,
+    photophobia: false,
+    visual: '',
+    sensory: false,
+    dysphasia: false,
+    dysarthria: false,
+    vertigo: false,
+    tinnitus: false,
+    hypoacusis: false,
+    diplopia: false,
+    defect: false,
+    conscience: false,
+    paresthesia: false,
+    dpf: false,
+  });
 
-  // Prepare data for charts
-  const migraineFrequencyData = migraineDays.map(day => ({
-    date: day.date,
-    value: day.hasMigraine ? day.severity : 0,
-    severity: day.hasMigraine ?
-      (day.severity === 1 ? 'mild' :
-        day.severity === 2 ? 'moderate' :
-          day.severity === 3 ? 'severe' : 'extreme') : 'none'
-  }));
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!formData.age || !formData.duration || !formData.frequency || !formData.location || !formData.character || !formData.intensity || formData.visual === '') {
+      alert('Please fill in all required fields');
+      return;
+    }
 
-  const sleepQualityData = healthMetrics.map(day => ({
-    date: day.date,
-    value: day.sleep,
-    note: day.note
-  }));
-
-  const stressLevelsData = healthMetrics.map(day => ({
-    date: day.date,
-    value: day.stress,
-    note: day.note
-  }));
-
-  const shareReport = async () => {
+    setLoading(true);
     try {
-      const today = new Date().toLocaleDateString();
-      const migraineDaysCount = migraineDays.filter(d => d.hasMigraine).length;
+      const payload = {
+        age: parseInt(formData.age),
+        duration: parseInt(formData.duration),
+        frequency: parseInt(formData.frequency),
+        location: parseInt(formData.location),
+        character: parseInt(formData.character),
+        intensity: parseInt(formData.intensity),
+        nausea: formData.nausea ? 1 : 0,
+        vomit: formData.vomit ? 1 : 0,
+        phonophobia: formData.phonophobia ? 1 : 0,
+        photophobia: formData.photophobia ? 1 : 0,
+        visual: parseInt(formData.visual),
+        sensory: formData.sensory ? 1 : 0,
+        dysphasia: formData.dysphasia ? 1 : 0,
+        dysarthria: formData.dysarthria ? 1 : 0,
+        vertigo: formData.vertigo ? 1 : 0,
+        tinnitus: formData.tinnitus ? 1 : 0,
+        hypoacusis: formData.hypoacusis ? 1 : 0,
+        diplopia: formData.diplopia ? 1 : 0,
+        defect: formData.defect ? 1 : 0,
+        conscience: formData.conscience ? 1 : 0,
+        paresthesia: formData.paresthesia ? 1 : 0,
+        dpf: formData.dpf ? 1 : 0,
+      };
 
-      let report = `Migraine Tracking Report - ${today}\n`;
-      report += `Generated by Migraine Tracker\n\n`;
-      report += `User: ${userData?.name || 'Anonymous'}\n`;
-      report += `30-Day Migraine Analysis\n\n`;
-
-      report += `📊 Summary:\n`;
-      report += `• Migraine Days: ${migraineDaysCount}/30\n`;
-      report += `• Migraine Frequency: ${Math.round(migraineDaysCount / 30 * 100)}%\n\n`;
-
-      // Add recent migraine days
-      const recentMigraines = migraineDays.filter(d => d.hasMigraine).slice(-5);
-      if (recentMigraines.length > 0) {
-        report += `Recent Migraine Episodes:\n`;
-        recentMigraines.forEach(day => {
-          report += `${new Date(day.date).toLocaleDateString()}: Severity ${day.severity}/4, ${day.duration}hrs\n`;
-          if (day.triggers.length > 0) {
-            report += `  Triggers: ${day.triggers.join(', ')}\n`;
-          }
-        });
-      }
-
-      report += `\nThis report includes detailed 30-day trend analysis with AI insights.`;
-
-      await Share.share({
-        message: report,
-        title: 'Migraine Tracking Report',
+      const response = await fetch(`${API_BASE_URL}/predict/symptom-type`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        setResult(data);
+      } else {
+        alert('Error: Could not classify symptoms');
+      }
     } catch (error) {
-      console.error('Failed to share report:', error);
+      alert('Network error: ' + error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (result) {
+    return (
+      <View style={[styles.container, darkMode && styles.containerDark]}>
+        <ModernHeader title="Symptom Classification" onBack={() => setResult(null)} />
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+          <View style={[styles.resultCard, darkMode && styles.resultCardDark]}>
+            <View style={styles.resultIcon}>
+              <Ionicons name="checkmark-circle" size={60} color="#10b981" />
+            </View>
+            <Text style={[styles.resultTitle, darkMode && styles.resultTitleDark]}>Classification Result</Text>
+            <Text style={[styles.resultText, darkMode && styles.resultTextDark]}>{result.predicted_class}</Text>
+            <Text style={[styles.confidenceText, darkMode && styles.confidenceTextDark]}>
+              Confidence: {(result.confidence * 100).toFixed(1)}%
+            </Text>
+
+            <Pressable onPress={() => setResult(null)} style={[styles.button, styles.buttonPrimary]}>
+              <Text style={styles.buttonText}>Log Another Assessment</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
-      <ModernHeader title="Migraine Tracking" onBack={() => router.back()} />
+      <ModernHeader title="Symptom Classification" onBack={() => router.back()} />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, darkMode && styles.sectionTitleDark]}>
-            Migraine Pattern Analysis
+            🧠 Migraine Type Classifier
           </Text>
           <Text style={[styles.sectionDescription, darkMode && styles.sectionDescriptionDark]}>
-            Track your migraine patterns with AI-powered insights and health correlations.
+            Answer these questions about your current migraine to identify the type.
           </Text>
         </View>
 
-        {/* AI Insights Panel */}
-        <AIInsightsPanel
-          migraineDays={migraineDays}
-          healthMetrics={healthMetrics}
-          darkMode={darkMode}
-        />
+        {/* Basic Info Section */}
+        <View style={styles.formSection}>
+          <Text style={[styles.formSectionTitle, darkMode && styles.formSectionTitleDark]}>Personal Information</Text>
 
-        {/* Charts */}
-        <View style={styles.chartsSection}>
-          <LineChart
-            title="Migraine Frequency & Severity"
-            data={migraineFrequencyData}
-            color="#10b981"
-            unit="severity"
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, darkMode && styles.inputLabelDark]}>Age *</Text>
+            <TextInput
+              style={[styles.textInput, darkMode && styles.textInputDark]}
+              placeholder="Years"
+              placeholderTextColor={darkMode ? '#7a9f94' : '#999'}
+              keyboardType="number-pad"
+              value={formData.age}
+              onChangeText={(text) => setFormData({ ...formData, age: text })}
+            />
+          </View>
+        </View>
+
+        {/* Migraine History Section */}
+        <View style={styles.formSection}>
+          <Text style={[styles.formSectionTitle, darkMode && styles.formSectionTitleDark]}>Migraine History</Text>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, darkMode && styles.inputLabelDark]}>Duration (days) *</Text>
+            <TextInput
+              style={[styles.textInput, darkMode && styles.textInputDark]}
+              placeholder="How many days does migraine last?"
+              placeholderTextColor={darkMode ? '#7a9f94' : '#999'}
+              keyboardType="number-pad"
+              value={formData.duration}
+              onChangeText={(text) => setFormData({ ...formData, duration: text })}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, darkMode && styles.inputLabelDark]}>Frequency (per month) *</Text>
+            <TextInput
+              style={[styles.textInput, darkMode && styles.textInputDark]}
+              placeholder="How many migraines per month?"
+              placeholderTextColor={darkMode ? '#7a9f94' : '#999'}
+              keyboardType="number-pad"
+              value={formData.frequency}
+              onChangeText={(text) => setFormData({ ...formData, frequency: text })}
+            />
+          </View>
+        </View>
+
+        {/* Pain Characteristics Section */}
+        <View style={styles.formSection}>
+          <Text style={[styles.formSectionTitle, darkMode && styles.formSectionTitleDark]}>Pain Characteristics</Text>
+
+          <SelectButton
+            label="Location *"
+            value={formData.location}
+            onSelect={(v) => setFormData({ ...formData, location: v })}
+            options={[
+              { label: 'One side of head', value: '1' },
+              { label: 'Both sides of head', value: '2' }
+            ]}
             darkMode={darkMode}
-            yAxisLabels={['None', 'Mild', 'Moderate', 'Severe', 'Extreme']}
-            maxValue={4}
           />
 
-          <LineChart
-            title="Sleep Quality Correlation"
-            data={sleepQualityData}
-            color="#3b82f6"
-            unit="quality"
+          <SelectButton
+            label="Type of pain *"
+            value={formData.character}
+            onSelect={(v) => setFormData({ ...formData, character: v })}
+            options={[
+              { label: 'Throbbing/Pulsating', value: '1' },
+              { label: 'Pressing/Tightening', value: '2' }
+            ]}
             darkMode={darkMode}
-            yAxisLabels={['Poor', 'Fair', 'Good', 'Great', 'Excellent']}
-            maxValue={10}
           />
 
-          <LineChart
-            title="Stress Levels"
-            data={stressLevelsData}
-            color="#ef4444"
-            unit="stress"
+          <SelectButton
+            label="Intensity *"
+            value={formData.intensity}
+            onSelect={(v) => setFormData({ ...formData, intensity: v })}
+            options={[
+              { label: 'Mild', value: '1' },
+              { label: 'Moderate', value: '2' },
+              { label: 'Severe', value: '3' }
+            ]}
             darkMode={darkMode}
-            yAxisLabels={['Low', 'Mild', 'Moderate', 'High', 'Extreme']}
-            maxValue={10}
           />
         </View>
 
-        {/* Share Button */}
+        {/* Associated Symptoms Section */}
+        <View style={styles.formSection}>
+          <Text style={[styles.formSectionTitle, darkMode && styles.formSectionTitleDark]}>Associated Symptoms</Text>
+
+          <ToggleButton label="Nausea?" value={formData.nausea} onChange={(v) => setFormData({ ...formData, nausea: v })} darkMode={darkMode} />
+          <ToggleButton label="Vomited?" value={formData.vomit} onChange={(v) => setFormData({ ...formData, vomit: v })} darkMode={darkMode} />
+          <ToggleButton label="Sensitive to sound?" value={formData.phonophobia} onChange={(v) => setFormData({ ...formData, phonophobia: v })} darkMode={darkMode} />
+          <ToggleButton label="Sensitive to light?" value={formData.photophobia} onChange={(v) => setFormData({ ...formData, photophobia: v })} darkMode={darkMode} />
+        </View>
+
+        {/* Aura Symptoms Section */}
+        <View style={styles.formSection}>
+          <Text style={[styles.formSectionTitle, darkMode && styles.formSectionTitleDark]}>Aura Symptoms</Text>
+
+          <SelectButton
+            label="Visual disturbances/aura *"
+            value={formData.visual}
+            onSelect={(v) => setFormData({ ...formData, visual: v })}
+            options={[
+              { label: 'None', value: '0' },
+              { label: 'Mild visual changes', value: '1' },
+              { label: 'Severe visual disturbances', value: '2' }
+            ]}
+            darkMode={darkMode}
+          />
+
+          <ToggleButton label="Sensory aura (tingling)?" value={formData.sensory} onChange={(v) => setFormData({ ...formData, sensory: v })} darkMode={darkMode} />
+        </View>
+
+        {/* Neurological Symptoms */}
+        <View style={styles.formSection}>
+          <Text style={[styles.formSectionTitle, darkMode && styles.formSectionTitleDark]}>Neurological Symptoms</Text>
+
+          <ToggleButton label="Difficulty finding words?" value={formData.dysphasia} onChange={(v) => setFormData({ ...formData, dysphasia: v })} darkMode={darkMode} />
+          <ToggleButton label="Slurred speech?" value={formData.dysarthria} onChange={(v) => setFormData({ ...formData, dysarthria: v })} darkMode={darkMode} />
+          <ToggleButton label="Dizziness/Vertigo?" value={formData.vertigo} onChange={(v) => setFormData({ ...formData, vertigo: v })} darkMode={darkMode} />
+          <ToggleButton label="Ringing in ears?" value={formData.tinnitus} onChange={(v) => setFormData({ ...formData, tinnitus: v })} darkMode={darkMode} />
+          <ToggleButton label="Reduced hearing?" value={formData.hypoacusis} onChange={(v) => setFormData({ ...formData, hypoacusis: v })} darkMode={darkMode} />
+          <ToggleButton label="Double vision?" value={formData.diplopia} onChange={(v) => setFormData({ ...formData, diplopia: v })} darkMode={darkMode} />
+          <ToggleButton label="Visual field defect?" value={formData.defect} onChange={(v) => setFormData({ ...formData, defect: v })} darkMode={darkMode} />
+          <ToggleButton label="Loss of consciousness?" value={formData.conscience} onChange={(v) => setFormData({ ...formData, conscience: v })} darkMode={darkMode} />
+          <ToggleButton label="Numbness/Tingling in limbs?" value={formData.paresthesia} onChange={(v) => setFormData({ ...formData, paresthesia: v })} darkMode={darkMode} />
+        </View>
+
+        {/* Family History */}
+        <View style={styles.formSection}>
+          <Text style={[styles.formSectionTitle, darkMode && styles.formSectionTitleDark]}>Family History</Text>
+          <ToggleButton label="Family history of migraine?" value={formData.dpf} onChange={(v) => setFormData({ ...formData, dpf: v })} darkMode={darkMode} />
+        </View>
+
+        {/* Submit Button */}
         <Pressable
-          onPress={shareReport}
-          style={({ pressed }) => [
-            styles.shareButton,
-            darkMode && styles.shareButtonDark,
-            pressed && styles.shareButtonPressed,
-          ]}
+          onPress={handleSubmit}
+          disabled={loading}
+          style={[styles.button, styles.buttonPrimary, loading && styles.buttonDisabled]}
         >
-          <Ionicons name="share" size={24} color="#fff" style={styles.shareIcon} />
-          <Text style={styles.shareButtonText}>Share Migraine Report</Text>
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.buttonText}>Classify Symptoms</Text>
+          )}
         </Pressable>
 
-        {/* Instructions for doctors */}
-        <View style={[styles.instructionsContainer, darkMode && styles.instructionsContainerDark]}>
-          <Text style={[styles.instructionsTitle, darkMode && styles.instructionsTitleDark]}>
-            For Healthcare Professionals
-          </Text>
-          <Text style={[styles.instructionsText, darkMode && styles.instructionsTextDark]}>
-            • Line graphs show 30-day migraine patterns and correlations{'\n'}
-            • Color-coded severity: Green (none) → Yellow (mild) → Orange (moderate) → Red (severe/extreme){'\n'}
-            • AI analysis identifies triggers and patterns from diary entries{'\n'}
-            • Sleep and stress correlations help identify lifestyle factors
-          </Text>
-        </View>
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -531,86 +751,229 @@ const styles = StyleSheet.create({
     color: '#d4e8e0',
   },
   sectionDescription: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#7a9f94',
-    lineHeight: 24,
+    lineHeight: 22,
   },
   sectionDescriptionDark: {
-    color: '#7a9f94',
+    color: '#a8d5c4',
   },
-  aiPanel: {
-    backgroundColor: '#d4e8e0',
-    borderRadius: 24,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#a8d5c4',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  aiPanelDark: {
-    backgroundColor: '#253029',
-    borderColor: '#5a8f7f',
-  },
-  aiHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  formSection: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
   },
-  aiTitle: {
-    fontSize: 20,
+  formSectionDark: {
+    backgroundColor: '#253029',
+  },
+  formSectionTitle: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#2d4a42',
-    marginLeft: 8,
-  },
-  aiTitleDark: {
-    color: '#d4e8e0',
-  },
-  aiText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#2d4a42',
     marginBottom: 16,
   },
-  aiTextDark: {
+  formSectionTitleDark: {
     color: '#d4e8e0',
   },
-  statsGrid: {
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#2d4a42',
+    marginBottom: 8,
+  },
+  inputLabelDark: {
+    color: '#d4e8e0',
+  },
+  textInput: {
+    backgroundColor: '#f5f8f7',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    color: '#2d4a42',
+    borderWidth: 1,
+    borderColor: '#d4e8e0',
+  },
+  textInputDark: {
+    backgroundColor: '#1a2622',
+    color: '#d4e8e0',
+    borderColor: '#5a8f7f',
+  },
+  selectContainer: {
+    marginBottom: 16,
+  },
+  selectLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#2d4a42',
+    marginBottom: 8,
+  },
+  selectLabelDark: {
+    color: '#d4e8e0',
+  },
+  selectButton: {
+    backgroundColor: '#f5f8f7',
+    borderRadius: 12,
+    padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
     alignItems: 'center',
-    backgroundColor: '#f0f5f3',
+    borderWidth: 1,
+    borderColor: '#d4e8e0',
+  },
+  selectButtonDark: {
+    backgroundColor: '#1a2622',
+    borderColor: '#5a8f7f',
+  },
+  selectButtonText: {
+    fontSize: 16,
+    color: '#2d4a42',
+    flex: 1,
+  },
+  selectButtonTextDark: {
+    color: '#d4e8e0',
+  },
+  toggleContainer: {
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#2d4a42',
+  },
+  toggleLabelDark: {
+    color: '#d4e8e0',
+  },
+  toggleButton: {
+    backgroundColor: '#f5f8f7',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#d4e8e0',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#10b981',
+    borderColor: '#059669',
+  },
+  toggleButtonDark: {
+    backgroundColor: '#1a2622',
+    borderColor: '#5a8f7f',
+  },
+  toggleButtonActiveDark: {
+    backgroundColor: '#059669',
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2d4a42',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '60%',
+  },
+  modalContentDark: {
+    backgroundColor: '#253029',
+  },
+  modalOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f5f3',
+  },
+  modalOptionDark: {
+    borderBottomColor: '#5a8f7f',
+  },
+  modalOptionSelected: {
+    backgroundColor: '#d4e8e0',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#2d4a42',
+  },
+  modalOptionTextDark: {
+    color: '#d4e8e0',
+  },
+  modalOptionTextSelected: {
+    color: '#059669',
+    fontWeight: '600',
+  },
+  button: {
     borderRadius: 14,
-    padding: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  buttonPrimary: {
+    backgroundColor: '#10b981',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  resultCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    marginTop: 20,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  statNumber: {
-    fontSize: 24,
+  resultCardDark: {
+    backgroundColor: '#253029',
+  },
+  resultIcon: {
+    marginBottom: 16,
+  },
+  resultTitle: {
+    fontSize: 20,
     fontWeight: '700',
-    color: '#a8d5c4',
+    color: '#2d4a42',
+    marginBottom: 12,
   },
-  statNumberDark: {
-    color: '#a8d5c4',
+  resultTitleDark: {
+    color: '#d4e8e0',
   },
-  statLabel: {
-    fontSize: 12,
-    color: '#7a9f94',
+  resultText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#10b981',
+    marginBottom: 8,
     textAlign: 'center',
-    marginTop: 4,
   },
-  statLabelDark: {
+  resultTextDark: {
+    color: '#10b981',
+  },
+  confidenceText: {
+    fontSize: 14,
     color: '#7a9f94',
+    marginBottom: 20,
+  },
+  confidenceTextDark: {
+    color: '#a8d5c4',
   },
   chartsSection: {
     marginBottom: 24,

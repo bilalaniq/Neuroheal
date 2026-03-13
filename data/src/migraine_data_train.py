@@ -263,14 +263,17 @@ for scenario in test_scenarios:
             print(f"      {direction}: {col} ({contrib:.3f})")
 
 # ============================================================================
-# Save to ../migraine_data folder
+# Save to ../migraine_data folder and ../backend/artifacts
 # ============================================================================
-print("\n💾 Saving model to ../migraine_data folder...")
+print("\n💾 Saving model to ../migraine_data folder and ../backend/artifacts...")
 
-# Create output directory: ../migraine_data
+# Create output directories
 output_dir = base_dir / "migraine_data"
 output_dir.mkdir(parents=True, exist_ok=True)
-print(f"✅ Output directory: {output_dir}")
+backend_dir = base_dir.parent / "backend" / "artifacts"
+backend_dir.mkdir(parents=True, exist_ok=True)
+print(f"✅ Data folder: {output_dir}")
+print(f"✅ Backend folder: {backend_dir}")
 
 # Save the model (scikit-learn format)
 model_payload = {
@@ -283,10 +286,17 @@ model_payload = {
     "top_5_triggers": feature_importance.head(5).to_dict('records')
 }
 
+# Save to data folder
 model_path = output_dir / "migraine_model_clean.pkl"
 with open(model_path, "wb") as f:
     pickle.dump(model_payload, f)
 print(f"✅ Model saved to: {model_path}")
+
+# ALSO save to backend/artifacts for API use
+backend_model_path = backend_dir / "migraine_model.pkl"
+with open(backend_model_path, "wb") as f:
+    pickle.dump(model_payload, f)
+print(f"✅ Model ALSO saved to backend: {backend_model_path}")
 
 # ============================================================================
 # ADDED: Save PyTorch format (.pt) if available

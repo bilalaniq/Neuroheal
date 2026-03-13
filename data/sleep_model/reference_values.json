@@ -1,0 +1,40 @@
+{
+  "rem": {
+    "migraine": 20.186363636363637,
+    "control": 23.2
+  },
+  "deep_sleep": {
+    "migraine": 22.667272727272728,
+    "control": 22.83909090909091
+  },
+  "sleep_onset": {
+    "migraine": 30.37244444444444,
+    "control": 29.57422222222222
+  },
+  "total_sleep": {
+    "migraine": 415.23099999999994,
+    "control": 436.9440000000001
+  },
+  "efficiency": {
+    "migraine": 84.77222222222223,
+    "control": 86.41777777777779
+  },
+  "wake_percent": {
+    "migraine": 18.823333333333334,
+    "control": 14.406666666666666
+  },
+  "psqi": {
+    "migraine": 7.6030000000000015,
+    "control": 5.153499999999999
+  },
+  "metrics_separation": {
+    "REM %": 13.89209009952854,
+    "Deep Sleep %": 0.7551391413788283,
+    "Sleep Onset": 2.663107947805444,
+    "Total Sleep": 5.095901663390768,
+    "Efficiency %": 1.9224902804551205,
+    "Wake %": 26.582405456916447,
+    "PSQI Score": 38.40395092697844
+  },
+  "accuracy_estimate": 12.759297930921942
+}

@@ -265,18 +265,27 @@ print(f"✅ Chart saved to: {chart_path}")
 # ============================================================================
 # STEP 8: Save model and all files
 # ============================================================================
-print("\n💾 Saving model to ../sleep_model folder...")
+print("\n💾 Saving model to ../sleep_model and ../backend/artifacts...")
 
-# Create output directory
+# Create output directories
 output_dir = Path('../sleep_model')
 output_dir.mkdir(parents=True, exist_ok=True)
-print(f"✅ Output directory: {output_dir}")
+backend_dir = Path('../../backend/artifacts')
+backend_dir.mkdir(parents=True, exist_ok=True)
+print(f"✅ Data folder: {output_dir}")
+print(f"✅ Backend folder: {backend_dir}")
 
 # Save the model (pickle format)
 model_path = output_dir / 'sleep_migraine_model.pkl'
 with open(model_path, 'wb') as f:
     pickle.dump(model, f)
 print(f"✅ Model saved to: {model_path}")
+
+# ALSO save to backend/artifacts for API use
+backend_model_path = backend_dir / 'sleep_model.pkl'
+with open(backend_model_path, 'wb') as f:
+    pickle.dump(model, f)
+print(f"✅ Model ALSO saved to backend: {backend_model_path}")
 
 # Try to save PyTorch format
 try:
@@ -315,6 +324,12 @@ ref_path = output_dir / 'reference_values.json'
 with open(ref_path, 'w') as f:
     json.dump(reference_values, f, indent=2)
 print(f"✅ Reference values saved to: {ref_path}")
+
+# ALSO save reference values to backend/artifacts
+backend_ref_path = backend_dir / 'sleep_reference_values.json'
+with open(backend_ref_path, 'w') as f:
+    json.dump(reference_values, f, indent=2)
+print(f"✅ Reference values ALSO saved to backend: {backend_ref_path}")
 
 # Save model metadata
 metadata = {

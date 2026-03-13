@@ -1,0 +1,21 @@
+{
+  "model_type": "SleepMigraineModel",
+  "training_date": "2026-03-13T18:03:32.968748",
+  "accuracy_estimate": 12.759297930921942,
+  "best_predictor": "PSQI Score",
+  "best_predictor_score": 38.40395092697844,
+  "metrics_separation": {
+    "REM %": 13.89209009952854,
+    "Deep Sleep %": 0.7551391413788283,
+    "Sleep Onset": 2.663107947805444,
+    "Total Sleep": 5.095901663390768,
+    "Efficiency %": 1.9224902804551205,
+    "Wake %": 26.582405456916447,
+    "PSQI Score": 38.40395092697844
+  },
+  "files_saved": [
+    "../sleep_model/sleep_migraine_model.pkl",
+    "../sleep_model/reference_values.json",
+    "../sleep_model/sleep_comparison_chart.png"
+  ]
+}

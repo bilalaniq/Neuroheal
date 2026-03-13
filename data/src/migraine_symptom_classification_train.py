@@ -239,6 +239,14 @@ with open(package_path, 'wb') as f:
     pickle.dump(package, f)
 print(f"   ✅ Saved: {package_path}")
 
+# ALSO save to backend/artifacts for API use
+backend_dir = current_dir.parent.parent / "backend" / "artifacts"
+backend_dir.mkdir(parents=True, exist_ok=True)
+backend_package_path = backend_dir / 'symptom_class_model.pkl'
+with open(backend_package_path, 'wb') as f:
+    pickle.dump(package, f)
+print(f"   ✅ ALSO Saved to backend: {backend_package_path}")
+
 # 9.8 Save training summary
 summary = {
     'training_date': datetime.now().isoformat(),

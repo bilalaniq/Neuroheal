@@ -1,0 +1,69 @@
+{
+  "training_date": "2026-03-13T18:06:26.497541",
+  "model_type": "RandomForest",
+  "samples": 400,
+  "features": 22,
+  "classes": 7,
+  "class_distribution": {
+    "Typical aura with migraine": 247,
+    "Migraine without aura": 60,
+    "Familial hemiplegic migraine": 24,
+    "Typical aura without migraine": 20,
+    "Basilar-type aura": 18,
+    "Other": 17,
+    "Sporadic hemiplegic migraine": 14
+  },
+  "test_accuracy": 0.9,
+  "top_features": [
+    {
+      "feature": "Visual",
+      "importance": 0.27162031077897714
+    },
+    {
+      "feature": "Intensity",
+      "importance": 0.08541397542775106
+    },
+    {
+      "feature": "Vertigo",
+      "importance": 0.08071255469047806
+    },
+    {
+      "feature": "Character",
+      "importance": 0.07654638694541918
+    },
+    {
+      "feature": "Frequency",
+      "importance": 0.06343598782169506
+    },
+    {
+      "feature": "Location",
+      "importance": 0.06318353380839913
+    },
+    {
+      "feature": "Age",
+      "importance": 0.06275844072051072
+    },
+    {
+      "feature": "Sensory",
+      "importance": 0.047198847621381206
+    },
+    {
+      "feature": "Tinnitus",
+      "importance": 0.0408845824925834
+    },
+    {
+      "feature": "Dysphasia",
+      "importance": 0.03427500805531041
+    }
+  ],
+  "files": [
+    "/mnt/d/breeha/data/migraine_symptom_classification/class_mapping.json",
+    "/mnt/d/breeha/data/migraine_symptom_classification/complete_package.pkl",
+    "/mnt/d/breeha/data/migraine_symptom_classification/feature_columns.json",
+    "/mnt/d/breeha/data/migraine_symptom_classification/feature_importance.csv",
+    "/mnt/d/breeha/data/migraine_symptom_classification/label_encoder.pkl",
+    "/mnt/d/breeha/data/migraine_symptom_classification/model.pkl",
+    "/mnt/d/breeha/data/migraine_symptom_classification/model.pt",
+    "/mnt/d/breeha/data/migraine_symptom_classification/scaler.pkl"
+  ]
+}

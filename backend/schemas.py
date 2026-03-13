@@ -2,80 +2,83 @@
 Pydantic schemas for API request/response validation.
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from typing import List, Optional
+from datetime import datetime
 
+
+# ============================================================================
+# MIGRAINE SYMPTOM CLASSIFICATION (model 1)
+# Input: symptoms during an episode → Output: migraine type
+# ============================================================================
 
 class MigraineFeatures(BaseModel):
-    """Input features for migraine prediction."""
+    """Input features for migraine type classification."""
 
     age: int = Field(..., ge=0, le=120, description="Patient age")
     duration: int = Field(..., ge=0, le=3, description="Duration of headache (0-3 scale)")
     frequency: int = Field(..., ge=0, le=7, description="Frequency of episodes (0-7 scale)")
-    location: int = Field(..., ge=0, le=1, description="Pain location (0 or 1)")
-    character: int = Field(..., ge=0, le=1, description="Pain character (0 or 1)")
-    intensity: int = Field(..., ge=0, le=3, description="Pain intensity (0-3 scale)")
+    location: int = Field(..., ge=0, le=1, description="Pain location: 1=unilateral, 2=bilateral")
+    character: int = Field(..., ge=0, le=1, description="Pain character: 1=pulsating, 2=pressing")
+    intensity: int = Field(..., ge=0, le=3, description="Pain intensity: 1=mild, 2=moderate, 3=severe")
 
-    # Symptoms (binary)
-    nausea: int = Field(..., ge=0, le=1, description="Nausea present")
-    vomit: int = Field(..., ge=0, le=1, description="Vomiting present")
-    phonophobia: int = Field(..., ge=0, le=1, description="Phonophobia present")
-    photophobia: int = Field(..., ge=0, le=1, description="Photophobia present")
-    visual: int = Field(..., ge=0, le=3, description="Visual symptoms (0-3)")
-    sensory: int = Field(..., ge=0, le=1, description="Sensory symptoms")
-    dysphasia: int = Field(..., ge=0, le=1, description="Dysphasia present")
-    dysarthria: int = Field(..., ge=0, le=1, description="Dysarthria present")
-    vertigo: int = Field(..., ge=0, le=1, description="Vertigo present")
-    tinnitus: int = Field(..., ge=0, le=1, description="Tinnitus present")
-    hypoacusis: int = Field(..., ge=0, le=1, description="Hypoacusis present")
-    diplopia: int = Field(..., ge=0, le=1, description="Diplopia present")
-    defect: int = Field(..., ge=0, le=1, description="Visual defect present")
-    ataxia: int = Field(..., ge=0, le=1, description="Ataxia present")
-    conscience: int = Field(..., ge=0, le=1, description="Consciousness alteration")
-    paresthesia: int = Field(..., ge=0, le=1, description="Paresthesia present")
-    dpf: int = Field(..., ge=0, le=1, description="Family history (DPF)")
+    # Symptoms (binary 0/1)
+    nausea: int = Field(..., ge=0, le=1)
+    vomit: int = Field(..., ge=0, le=1)
+    phonophobia: int = Field(..., ge=0, le=1, description="Sound sensitivity")
+    photophobia: int = Field(..., ge=0, le=1, description="Light sensitivity")
+    visual: int = Field(..., ge=0, le=3, description="Visual disturbance: 0=none, 1=partial, 2=full")
+    sensory: int = Field(..., ge=0, le=1)
+    dysphasia: int = Field(..., ge=0, le=1, description="Speech difficulty")
+    dysarthria: int = Field(..., ge=0, le=1, description="Slurred speech")
+    vertigo: int = Field(..., ge=0, le=1)
+    tinnitus: int = Field(..., ge=0, le=1, description="Ringing ears")
+    hypoacusis: int = Field(..., ge=0, le=1, description="Hearing loss")
+    diplopia: int = Field(..., ge=0, le=1, description="Double vision")
+    defect: int = Field(..., ge=0, le=1, description="Visual field defect")
+    ataxia: int = Field(default=0, ge=0, le=1)
+    conscience: int = Field(..., ge=0, le=1, description="Loss of consciousness")
+    paresthesia: int = Field(..., ge=0, le=1, description="Tingling/numbness")
+    dpf: int = Field(..., ge=0, le=1, description="Family history of migraine")
 
-    # Extended features (24-50) - Optional fields for app expansion
-    # Default to 0 if not provided
-    ext_1: int = Field(default=0, ge=0, le=100, description="Extended feature 1")
-    ext_2: int = Field(default=0, ge=0, le=100, description="Extended feature 2")
-    ext_3: int = Field(default=0, ge=0, le=100, description="Extended feature 3")
-    ext_4: int = Field(default=0, ge=0, le=100, description="Extended feature 4")
-    ext_5: int = Field(default=0, ge=0, le=100, description="Extended feature 5")
-    ext_6: int = Field(default=0, ge=0, le=100, description="Extended feature 6")
-    ext_7: int = Field(default=0, ge=0, le=100, description="Extended feature 7")
-    ext_8: int = Field(default=0, ge=0, le=100, description="Extended feature 8")
-    ext_9: int = Field(default=0, ge=0, le=100, description="Extended feature 9")
-    ext_10: int = Field(default=0, ge=0, le=100, description="Extended feature 10")
-    ext_11: int = Field(default=0, ge=0, le=100, description="Extended feature 11")
-    ext_12: int = Field(default=0, ge=0, le=100, description="Extended feature 12")
-    ext_13: int = Field(default=0, ge=0, le=100, description="Extended feature 13")
-    ext_14: int = Field(default=0, ge=0, le=100, description="Extended feature 14")
-    ext_15: int = Field(default=0, ge=0, le=100, description="Extended feature 15")
-    ext_16: int = Field(default=0, ge=0, le=100, description="Extended feature 16")
-    ext_17: int = Field(default=0, ge=0, le=100, description="Extended feature 17")
-    ext_18: int = Field(default=0, ge=0, le=100, description="Extended feature 18")
-    ext_19: int = Field(default=0, ge=0, le=100, description="Extended feature 19")
-    ext_20: int = Field(default=0, ge=0, le=100, description="Extended feature 20")
-    ext_21: int = Field(default=0, ge=0, le=100, description="Extended feature 21")
-    ext_22: int = Field(default=0, ge=0, le=100, description="Extended feature 22")
-    ext_23: int = Field(default=0, ge=0, le=100, description="Extended feature 23")
-    ext_24: int = Field(default=0, ge=0, le=100, description="Extended feature 24")
-    ext_25: int = Field(default=0, ge=0, le=100, description="Extended feature 25")
-    ext_26: int = Field(default=0, ge=0, le=100, description="Extended feature 26")
-    ext_27: int = Field(default=0, ge=0, le=100, description="Extended feature 27")
+    # Extended features (24-50) for future use — default 0
+    ext_1: int = Field(default=0, ge=0, le=100)
+    ext_2: int = Field(default=0, ge=0, le=100)
+    ext_3: int = Field(default=0, ge=0, le=100)
+    ext_4: int = Field(default=0, ge=0, le=100)
+    ext_5: int = Field(default=0, ge=0, le=100)
+    ext_6: int = Field(default=0, ge=0, le=100)
+    ext_7: int = Field(default=0, ge=0, le=100)
+    ext_8: int = Field(default=0, ge=0, le=100)
+    ext_9: int = Field(default=0, ge=0, le=100)
+    ext_10: int = Field(default=0, ge=0, le=100)
+    ext_11: int = Field(default=0, ge=0, le=100)
+    ext_12: int = Field(default=0, ge=0, le=100)
+    ext_13: int = Field(default=0, ge=0, le=100)
+    ext_14: int = Field(default=0, ge=0, le=100)
+    ext_15: int = Field(default=0, ge=0, le=100)
+    ext_16: int = Field(default=0, ge=0, le=100)
+    ext_17: int = Field(default=0, ge=0, le=100)
+    ext_18: int = Field(default=0, ge=0, le=100)
+    ext_19: int = Field(default=0, ge=0, le=100)
+    ext_20: int = Field(default=0, ge=0, le=100)
+    ext_21: int = Field(default=0, ge=0, le=100)
+    ext_22: int = Field(default=0, ge=0, le=100)
+    ext_23: int = Field(default=0, ge=0, le=100)
+    ext_24: int = Field(default=0, ge=0, le=100)
+    ext_25: int = Field(default=0, ge=0, le=100)
+    ext_26: int = Field(default=0, ge=0, le=100)
+    ext_27: int = Field(default=0, ge=0, le=100)
 
     def to_tensor(self):
-        """Convert to list in correct order for model input (50 features)."""
+        """Convert to ordered list of 50 features for model input."""
         return [
-            # Original 23 features
             self.age, self.duration, self.frequency, self.location,
             self.character, self.intensity, self.nausea, self.vomit,
             self.phonophobia, self.photophobia, self.visual, self.sensory,
             self.dysphasia, self.dysarthria, self.vertigo, self.tinnitus,
             self.hypoacusis, self.diplopia, self.defect, self.ataxia,
             self.conscience, self.paresthesia, self.dpf,
-            # Extended 27 features (default to 0)
             self.ext_1, self.ext_2, self.ext_3, self.ext_4, self.ext_5,
             self.ext_6, self.ext_7, self.ext_8, self.ext_9, self.ext_10,
             self.ext_11, self.ext_12, self.ext_13, self.ext_14, self.ext_15,
@@ -87,342 +90,330 @@ class MigraineFeatures(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "age": 35,
-                "duration": 2,
-                "frequency": 5,
-                "location": 1,
-                "character": 1,
-                "intensity": 3,
-                "nausea": 1,
-                "vomit": 1,
-                "phonophobia": 1,
-                "photophobia": 1,
-                "visual": 0,
-                "sensory": 0,
-                "dysphasia": 0,
-                "dysarthria": 0,
-                "vertigo": 0,
-                "tinnitus": 0,
-                "hypoacusis": 0,
-                "diplopia": 0,
-                "defect": 0,
-                "ataxia": 0,
-                "conscience": 0,
-                "paresthesia": 0,
-                "dpf": 1
+                "age": 35, "duration": 2, "frequency": 5, "location": 1,
+                "character": 1, "intensity": 3, "nausea": 1, "vomit": 1,
+                "phonophobia": 1, "photophobia": 1, "visual": 0, "sensory": 0,
+                "dysphasia": 0, "dysarthria": 0, "vertigo": 0, "tinnitus": 0,
+                "hypoacusis": 0, "diplopia": 0, "defect": 0, "ataxia": 0,
+                "conscience": 0, "paresthesia": 0, "dpf": 1
             }
         }
 
 
 class PredictionResponse(BaseModel):
-    """Response from prediction endpoint."""
-
+    """Response from migraine type classification endpoint."""
     prediction: str = Field(..., description="Predicted migraine type")
-    confidence: float = Field(..., ge=0, le=1, description="Prediction confidence (0-1)")
-    all_probabilities: dict = Field(..., description="Probabilities for all classes")
-    timestamp: str = Field(..., description="Prediction timestamp")
+    confidence: float = Field(..., ge=0, le=1)
+    all_probabilities: dict = Field(..., description="Probabilities for all 8 classes")
+    timestamp: str
 
 
-class UpdateRequest(BaseModel):
-    """Request to update model with new data."""
+# ============================================================================
+# MIGRAINE OCCURRENCE PREDICTION (model 2)
+# Input: daily trigger checklist → Output: migraine yes/no + risk score
+# ============================================================================
 
-    features: MigraineFeatures
-    true_label: str = Field(..., description="True migraine type (user confirmed)")
-    force_update: bool = Field(default=False, description="Force update even if high confidence")
+class MigraineTriggerRequest(BaseModel):
+    """
+    Daily trigger checklist filled by the user each morning.
+    Rate each trigger on a scale: 0=not present, 1=mild, 2=moderate, 3=high, 4=severe
+    """
+    # Environmental triggers
+    cold_air_exposure: int = Field(default=0, ge=0, le=4)
+    perfume_or_strong_odors: int = Field(default=0, ge=0, le=4)
+    bright_or_flashing_lights: int = Field(default=0, ge=0, le=4)
+    loud_sounds: int = Field(default=0, ge=0, le=4)
+    changing_weather: int = Field(default=0, ge=0, le=4)
+    hot_and_humid_weather: int = Field(default=0, ge=0, le=4)
+
+    # Lifestyle triggers
+    physical_exertion: int = Field(default=0, ge=0, le=4)
+    overslept: int = Field(default=0, ge=0, le=4)
+    lack_of_sleep: int = Field(default=0, ge=0, le=4)
+    stress: int = Field(default=0, ge=0, le=4)
+    post_stress_letdown: int = Field(default=0, ge=0, le=4)
+    missed_a_meal: int = Field(default=0, ge=0, le=4)
+    dehydration: int = Field(default=0, ge=0, le=4)
+
+    # Food triggers
+    nightshade_vegetables: int = Field(default=0, ge=0, le=4, description="Tomatoes, eggplants, potatoes, peppers")
+    smoked_or_cured_meat: int = Field(default=0, ge=0, le=4, description="Hot dogs, etc.")
+    bananas: int = Field(default=0, ge=0, le=4)
+    caffeine: int = Field(default=0, ge=0, le=4)
+    citrus_fruit_or_juice: int = Field(default=0, ge=0, le=4)
+    beer: int = Field(default=0, ge=0, le=4)
+    aged_or_blue_cheese: int = Field(default=0, ge=0, le=4)
+    chocolate: int = Field(default=0, ge=0, le=4)
+    red_wine: int = Field(default=0, ge=0, le=4)
+    liquor_or_spirits: int = Field(default=0, ge=0, le=4)
+    sugar_and_sweets: int = Field(default=0, ge=0, le=4)
+
+    # Previous day context
+    prev_day_migraine: int = Field(default=0, ge=0, le=1, description="Did you have a migraine yesterday?")
+    is_weekend: Optional[int] = Field(default=None, ge=0, le=1, description="Leave null to auto-calculate")
 
     class Config:
         schema_extra = {
             "example": {
-                "features": {
-                    "age": 35, "duration": 2, "frequency": 5, "location": 1,
-                    "character": 1, "intensity": 3, "nausea": 1, "vomit": 1,
-                    "phonophobia": 1, "photophobia": 1, "visual": 0, "sensory": 0,
-                    "dysphasia": 0, "dysarthria": 0, "vertigo": 0, "tinnitus": 0,
-                    "hypoacusis": 0, "diplopia": 0, "defect": 0, "ataxia": 0,
-                    "conscience": 0, "paresthesia": 0, "dpf": 1
-                },
-                "true_label": "Migraine without aura",
-                "force_update": False
+                "stress": 4,
+                "lack_of_sleep": 3,
+                "caffeine": 2,
+                "dehydration": 2,
+                "prev_day_migraine": 0
             }
         }
+
+
+class MigrainePredictionResponse(BaseModel):
+    """Response from daily migraine occurrence prediction endpoint."""
+    migraine_predicted: bool = Field(..., description="True if migraine is likely today")
+    risk_level: str = Field(..., description="LOW / MEDIUM / HIGH")
+    probability: float = Field(..., ge=0, le=1, description="Probability of migraine (0-1)")
+    top_triggers: List[str] = Field(..., description="Top contributing triggers today")
+    recommendation: str = Field(..., description="Actionable advice based on risk")
+    timestamp: str
+
+
+# ============================================================================
+# SLEEP ASSESSMENT (model 3)
+# Input: last night's sleep metrics → Output: migraine-like sleep pattern or not
+# ============================================================================
+
+class SleepAssessmentRequest(BaseModel):
+    """
+    Sleep metrics from last night.
+    Can be filled manually or pulled automatically from Google Fit.
+    """
+    total_sleep_minutes: float = Field(..., ge=0, le=900, description="Total sleep time in minutes")
+    sleep_onset_minutes: float = Field(..., ge=0, le=180, description="Time to fall asleep in minutes")
+    rem_percent: float = Field(..., ge=0, le=100, description="% of sleep in REM stage")
+    deep_sleep_percent: float = Field(..., ge=0, le=100, description="% of sleep in deep/N3 stage")
+
+    # Optional — pulled from Google Fit if available
+    n2_percent: Optional[float] = Field(default=None, ge=0, le=100, description="% light sleep N2")
+    n1_percent: Optional[float] = Field(default=None, ge=0, le=100, description="% light sleep N1")
+    wake_percent: Optional[float] = Field(default=None, ge=0, le=100, description="% time awake during night")
+    sleep_efficiency: Optional[float] = Field(default=None, ge=0, le=100, description="Sleep efficiency %")
+    psqi_score: Optional[float] = Field(default=None, ge=0, le=21, description="PSQI global score (0-21). Higher = worse sleep.")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "total_sleep_minutes": 390,
+                "sleep_onset_minutes": 25,
+                "rem_percent": 18.0,
+                "deep_sleep_percent": 12.0,
+                "wake_percent": 8.0,
+                "sleep_efficiency": 84.0
+            }
+        }
+
+
+class SleepAssessmentResponse(BaseModel):
+    """Response from sleep assessment endpoint."""
+    classification: str = Field(..., description="'Migraine-like' or 'Normal-like'")
+    risk_score: float = Field(..., ge=0, le=1, description="0=healthy sleep, 1=migraine-like sleep")
+    metrics_comparison: dict = Field(..., description="Your values vs migraine patient averages vs healthy averages")
+    warnings: List[str] = Field(..., description="Specific sleep issues found")
+    recommendation: str = Field(..., description="Actionable sleep advice")
+    timestamp: str
+
+
+# ============================================================================
+# COMBINED ENDPOINT — all 3 models in one call
+# ============================================================================
+
+class FullMigraineAssessmentRequest(BaseModel):
+    """
+    Send all data at once for a complete migraine risk assessment.
+    sleep_data and trigger_data are both optional — only available models will run.
+    """
+    symptom_data: Optional[MigraineFeatures] = Field(default=None, description="For migraine type classification")
+    trigger_data: Optional[MigraineTriggerRequest] = Field(default=None, description="For daily occurrence prediction")
+    sleep_data: Optional[SleepAssessmentRequest] = Field(default=None, description="For sleep risk assessment")
+
+
+class FullMigraineAssessmentResponse(BaseModel):
+    """Combined response from all 3 models."""
+    symptom_classification: Optional[PredictionResponse] = None
+    migraine_prediction: Optional[MigrainePredictionResponse] = None
+    sleep_assessment: Optional[SleepAssessmentResponse] = None
+    overall_risk: str = Field(..., description="Combined risk summary: LOW / MEDIUM / HIGH")
+    timestamp: str
+
+
+# ============================================================================
+# ONLINE LEARNING (update model with confirmed label)
+# ============================================================================
+
+class UpdateRequest(BaseModel):
+    features: MigraineFeatures
+    true_label: str = Field(..., description="Confirmed migraine type")
+    force_update: bool = Field(default=False)
 
 
 class UpdateResponse(BaseModel):
-    """Response from model update endpoint."""
-
-    status: str = Field(..., description="Update status")
-    updated: bool = Field(..., description="Whether model was actually updated")
-    loss: Optional[float] = Field(None, description="Training loss if updated")
-    confidence: float = Field(..., description="Model confidence before update")
-    update_count: Optional[int] = Field(None, description="Total number of updates")
-    reason: Optional[str] = Field(None, description="Reason if not updated")
+    status: str
+    updated: bool
+    loss: Optional[float] = None
+    confidence: float
+    update_count: Optional[int] = None
+    reason: Optional[str] = None
 
 
 class MetricsResponse(BaseModel):
-    """Response from metrics endpoint."""
+    total_updates: int
+    skipped_updates: int
+    replay_buffer_size: int
+    avg_recent_loss: Optional[float] = None
+    learning_rate: float
 
-    total_updates: int = Field(..., description="Total number of model updates")
-    skipped_updates: int = Field(..., description="Number of skipped updates (high confidence)")
-    replay_buffer_size: int = Field(..., description="Current replay buffer size")
-    avg_recent_loss: Optional[float] = Field(None, description="Average recent loss")
-    learning_rate: float = Field(..., description="Current learning rate")
 
+# ============================================================================
+# HEALTH CHECK
+# ============================================================================
 
 class HealthResponse(BaseModel):
-    """Health check response."""
-
-    status: str = Field(..., description="Service status")
-    model_loaded: bool = Field(..., description="Whether model is loaded")
-    version: str = Field(..., description="API version")
+    status: str
+    model_loaded: bool
+    version: str
 
 
-class AccumulateRequest(BaseModel):
-    """Request to accumulate data for later batch update."""
-
-    features: MigraineFeatures
-    true_label: str = Field(..., description="True migraine type (user confirmed)")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "features": {
-                    "age": 35, "duration": 2, "frequency": 5, "location": 1,
-                    "character": 1, "intensity": 3, "nausea": 1, "vomit": 1,
-                    "phonophobia": 1, "photophobia": 1, "visual": 0, "sensory": 0,
-                    "dysphasia": 0, "dysarthria": 0, "vertigo": 0, "tinnitus": 0,
-                    "hypoacusis": 0, "diplopia": 0, "defect": 0, "ataxia": 0,
-                    "conscience": 0, "paresthesia": 0, "dpf": 1
-                },
-                "true_label": "Migraine without aura"
-            }
-        }
-
-
-class AccumulateResponse(BaseModel):
-    """Response from accumulate endpoint."""
-
-    status: str = Field(..., description="Accumulation status")
-    session_size: int = Field(..., description="Number of samples in current session")
-    message: str = Field(..., description="Status message")
-
-
-class BatchUpdateResponse(BaseModel):
-    """Response from batch model update."""
-
-    status: str = Field(..., description="Update status")
-    samples_processed: int = Field(..., description="Number of samples processed")
-    avg_loss: Optional[float] = Field(None, description="Average training loss")
-    total_updates: int = Field(..., description="Total number of updates performed")
-    session_cleared: bool = Field(..., description="Whether session data was cleared")
-
-
-class ClearSessionResponse(BaseModel):
-    """Response from clear session endpoint."""
-
-    status: str = Field(..., description="Clear status")
-    samples_cleared: int = Field(..., description="Number of samples cleared")
-    message: str = Field(..., description="Status message")
-
+# ============================================================================
+# CHAT (Gemini)
+# ============================================================================
 
 class ChatRequest(BaseModel):
-    """Request for Gemini chat endpoint."""
-
-    message: str = Field(..., min_length=1, description="User message to send to Gemini")
-    system_prompt: Optional[str] = Field(None, description="Optional system prompt for context")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "message": "What are the common symptoms of migraine?",
-                "system_prompt": "You are a helpful medical assistant specializing in migraines."
-            }
-        }
+    message: str = Field(..., min_length=1)
+    system_prompt: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
-    """Response from Gemini chat endpoint."""
-
-    response: str = Field(..., description="Gemini's response")
-    timestamp: str = Field(..., description="Response timestamp")
+    response: str
+    timestamp: str
 
 
-class IntegrationData(BaseModel):
-    """Health and environmental integration data."""
-
-    sleep_hours: Optional[float] = Field(None, description="Sleep duration in hours")
-    sleep_quality: Optional[str] = Field(None, description="Sleep quality rating")
-    alcohol_units: Optional[float] = Field(None, description="Alcohol consumption in units")
-    alcohol_hours_ago: Optional[float] = Field(None, description="Hours since last alcohol")
-    steps: Optional[int] = Field(None, description="Step count")
-    heart_rate: Optional[int] = Field(None, description="Heart rate BPM")
-    screen_time_minutes: Optional[int] = Field(None, description="Screen time in minutes")
-    screen_brightness: Optional[float] = Field(None, description="Screen brightness (0-1)")
-    outdoor_brightness: Optional[float] = Field(None, description="Outdoor brightness lux")
-    weather: Optional[str] = Field(None, description="Weather conditions")
-    temperature: Optional[float] = Field(None, description="Temperature in Celsius")
-    barometric_pressure: Optional[float] = Field(None, description="Barometric pressure hPa")
-
-
-class PredictionWithIntegrations(BaseModel):
-    """Prediction request with integration data for BigQuery."""
-
-    user_id: str = Field(..., description="User identifier")
-    name: Optional[str] = Field(None, description="User name")
-    age_bracket: Optional[int] = Field(None, description="User age bracket")
-    session_id: Optional[str] = Field(None, description="Session identifier")
-
-    # Prediction results (from /predict endpoint)
-    prediction: Optional[str] = Field(None, description="Predicted migraine type")
-    confidence: Optional[float] = Field(None, description="Prediction confidence")
-    all_probabilities: Optional[dict] = Field(None, description="All class probabilities")
-
-    features: MigraineFeatures
-    integrations: Optional[IntegrationData] = Field(None, description="Integration data")
-    integrations_enabled: Optional[List[str]] = Field(None, description="List of enabled integrations")
-
-
-class SavePredictionResponse(BaseModel):
-    """Response from save prediction endpoint."""
-
-    status: str = Field(..., description="Save status")
-    bigquery_saved: bool = Field(..., description="Whether saved to BigQuery")
-    prediction: str = Field(..., description="Prediction result")
-    confidence: float = Field(..., description="Prediction confidence")
-
-
-# Google Fit Health Data Schemas
+# ============================================================================
+# GOOGLE FIT — Health Data Schemas (unchanged)
+# ============================================================================
 
 class StepsData(BaseModel):
-    """Daily step count data."""
-    date: str = Field(..., description="Date in YYYY-MM-DD format")
-    steps: int = Field(..., ge=0, description="Number of steps")
+    date: str
+    steps: int = Field(..., ge=0)
 
 
 class StepsResponse(BaseModel):
-    """Response with step count data."""
-    status: str = Field(..., description="Status of the request")
-    total_steps: int = Field(..., description="Total steps in period")
-    average_steps: int = Field(..., description="Average steps per day")
-    period_days: int = Field(..., description="Number of days with data")
-    daily_steps: List[StepsData] = Field(..., description="Daily step breakdown")
-    start_date: str = Field(..., description="Period start date")
-    end_date: str = Field(..., description="Period end date")
+    status: str
+    total_steps: int
+    average_steps: int
+    period_days: int
+    daily_steps: List[StepsData]
+    start_date: str
+    end_date: str
 
 
 class SleepRecord(BaseModel):
-    """Individual sleep record."""
-    start_time: str = Field(..., description="Sleep start time ISO format")
-    end_time: str = Field(..., description="Sleep end time ISO format")
-    duration_minutes: float = Field(..., ge=0, description="Duration in minutes")
-    stage: str = Field(..., description="Sleep stage (Awake, Light sleep, Deep sleep, etc)")
+    start_time: str
+    end_time: str
+    duration_minutes: float = Field(..., ge=0)
+    stage: str
 
 
 class SleepSchedule(BaseModel):
-    """Sleep schedule statistics."""
-    average_sleep_start_hour: Optional[float] = Field(None, description="Average hour when sleep starts")
-    earliest_sleep_hour: Optional[float] = Field(None, description="Earliest sleep hour")
-    latest_sleep_hour: Optional[float] = Field(None, description="Latest sleep hour")
-    consistency_score: Optional[float] = Field(None, description="Sleep consistency percentage")
-    status: Optional[str] = Field(None, description="Status message if no data")
+    average_sleep_start_hour: Optional[float] = None
+    earliest_sleep_hour: Optional[float] = None
+    latest_sleep_hour: Optional[float] = None
+    consistency_score: Optional[float] = None
+    status: Optional[str] = None
 
 
 class SleepResponse(BaseModel):
-    """Response with sleep data."""
-    status: str = Field(..., description="Status of the request")
-    total_sleep_hours: float = Field(..., ge=0, description="Total sleep hours")
-    total_sleep_minutes: float = Field(..., ge=0, description="Total sleep minutes")
-    average_sleep_hours: float = Field(..., ge=0, description="Average sleep per night")
-    nights_recorded: int = Field(..., ge=0, description="Number of nights with data")
-    sleep_records: List[SleepRecord] = Field(..., description="Individual sleep records")
-    sleep_schedule: Optional[SleepSchedule] = Field(None, description="Sleep schedule statistics")
-    start_date: str = Field(..., description="Period start date")
-    end_date: str = Field(..., description="Period end date")
-    message: Optional[str] = Field(None, description="Additional message")
+    status: str
+    total_sleep_hours: float = Field(..., ge=0)
+    total_sleep_minutes: float = Field(..., ge=0)
+    average_sleep_hours: float = Field(..., ge=0)
+    nights_recorded: int = Field(..., ge=0)
+    sleep_records: List[SleepRecord]
+    sleep_schedule: Optional[SleepSchedule] = None
+    start_date: str
+    end_date: str
+    message: Optional[str] = None
 
 
 class HeartRateData(BaseModel):
-    """Heart rate measurement."""
-    timestamp: str = Field(..., description="Measurement timestamp ISO format")
-    bpm: float = Field(..., ge=0, description="Beats per minute")
+    timestamp: str
+    bpm: float = Field(..., ge=0)
 
 
 class HeartRateResponse(BaseModel):
-    """Response with heart rate data."""
-    status: str = Field(..., description="Status of the request")
-    min_bpm: Optional[float] = Field(None, ge=0, description="Minimum heart rate")
-    max_bpm: Optional[float] = Field(None, ge=0, description="Maximum heart rate")
-    average_bpm: Optional[float] = Field(None, ge=0, description="Average heart rate")
-    measurements_count: int = Field(..., ge=0, description="Number of measurements")
-    heart_rates: List[HeartRateData] = Field(..., description="Heart rate measurements")
-    start_date: Optional[str] = Field(None, description="Period start date")
-    end_date: Optional[str] = Field(None, description="Period end date")
-    message: Optional[str] = Field(None, description="Additional message")
-    watch_required: Optional[bool] = Field(None, description="True if a smartwatch is needed")
-    recommended_device: Optional[str] = Field(None, description="Recommended device to get this data")
-    setup_instructions: Optional[str] = Field(None, description="How to set up the device")
+    status: str
+    min_bpm: Optional[float] = None
+    max_bpm: Optional[float] = None
+    average_bpm: Optional[float] = None
+    measurements_count: int = Field(..., ge=0)
+    heart_rates: List[HeartRateData]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
 
 
 class BloodPressureReading(BaseModel):
-    """Blood pressure reading."""
-    timestamp: str = Field(..., description="Reading timestamp ISO format")
-    systolic: float = Field(..., ge=0, description="Systolic pressure mmHg")
-    diastolic: float = Field(..., ge=0, description="Diastolic pressure mmHg")
-    status: str = Field(..., description="BP status (Normal, Elevated, High Stage 1/2, Crisis)")
+    timestamp: str
+    systolic: float = Field(..., ge=0)
+    diastolic: float = Field(..., ge=0)
+    status: str
 
 
 class BloodPressureResponse(BaseModel):
-    """Response with blood pressure data."""
-    status: str = Field(..., description="Status of the request")
-    readings_count: int = Field(..., ge=0, description="Number of readings")
-    readings: List[BloodPressureReading] = Field(..., description="Blood pressure readings")
-    start_date: Optional[str] = Field(None, description="Period start date")
-    end_date: Optional[str] = Field(None, description="Period end date")
-    message: Optional[str] = Field(None, description="Additional message")
-    watch_required: Optional[bool] = Field(None, description="True if a device is needed")
-    recommended_device: Optional[str] = Field(None, description="Recommended device")
-    setup_instructions: Optional[str] = Field(None, description="How to set up")
+    status: str
+    readings_count: int = Field(..., ge=0)
+    readings: List[BloodPressureReading]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
 
 
 class WeightMeasurement(BaseModel):
-    """Weight measurement."""
-    timestamp: str = Field(..., description="Measurement timestamp ISO format")
-    weight_kg: float = Field(..., gt=0, description="Weight in kilograms")
-    weight_lbs: float = Field(..., gt=0, description="Weight in pounds")
+    timestamp: str
+    weight_kg: float = Field(..., gt=0)
+    weight_lbs: float = Field(..., gt=0)
 
 
 class WeightResponse(BaseModel):
-    """Response with weight data."""
-    status: str = Field(..., description="Status of the request")
-    latest_weight_kg: Optional[float] = Field(None, gt=0, description="Latest weight in kg")
-    latest_weight_lbs: Optional[float] = Field(None, gt=0, description="Latest weight in lbs")
-    min_weight_kg: Optional[float] = Field(None, gt=0, description="Minimum weight in kg")
-    max_weight_kg: Optional[float] = Field(None, gt=0, description="Maximum weight in kg")
-    measurements_count: int = Field(..., ge=0, description="Number of measurements")
-    measurements: List[WeightMeasurement] = Field(..., description="Weight measurements")
-    start_date: Optional[str] = Field(None, description="Period start date")
-    end_date: Optional[str] = Field(None, description="Period end date")
-    message: Optional[str] = Field(None, description="Additional message")
-    watch_required: Optional[bool] = Field(None, description="True if a smart scale is needed")
-    recommended_device: Optional[str] = Field(None, description="Recommended device")
-    setup_instructions: Optional[str] = Field(None, description="How to set up")
+    status: str
+    latest_weight_kg: Optional[float] = None
+    latest_weight_lbs: Optional[float] = None
+    min_weight_kg: Optional[float] = None
+    max_weight_kg: Optional[float] = None
+    measurements_count: int = Field(..., ge=0)
+    measurements: List[WeightMeasurement]
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    message: Optional[str] = None
+    watch_required: Optional[bool] = None
+    recommended_device: Optional[str] = None
+    setup_instructions: Optional[str] = None
 
 
 class AllHealthDataResponse(BaseModel):
-    """Response with all health data from Google Fit."""
-    status: str = Field(..., description="Status of the request")
-    steps: StepsResponse = Field(..., description="Step count data")
-    sleep: SleepResponse = Field(..., description="Sleep data")
-    heart_rate: HeartRateResponse = Field(..., description="Heart rate data")
-    blood_pressure: BloodPressureResponse = Field(..., description="Blood pressure data")
-    weight: WeightResponse = Field(..., description="Weight data")
-    timestamp: str = Field(..., description="Response timestamp")
+    status: str
+    steps: StepsResponse
+    sleep: SleepResponse
+    heart_rate: HeartRateResponse
+    blood_pressure: BloodPressureResponse
+    weight: WeightResponse
+    timestamp: str
 
-
-# --- New extended health data schemas ---
 
 class CaloriesData(BaseModel):
     date: str
-    calories: float = Field(..., ge=0, description="Calories burned (kcal)")
+    calories: float = Field(..., ge=0)
 
 class CaloriesResponse(BaseModel):
     status: str
@@ -470,8 +461,8 @@ class ActiveMinutesResponse(BaseModel):
 
 class SpeedData(BaseModel):
     timestamp: str
-    speed_mps: float = Field(..., ge=0, description="Speed in meters per second")
-    speed_kmh: float = Field(..., ge=0, description="Speed in km/h")
+    speed_mps: float = Field(..., ge=0)
+    speed_kmh: float = Field(..., ge=0)
 
 class SpeedResponse(BaseModel):
     status: str
@@ -617,9 +608,7 @@ class PowerResponse(BaseModel):
 
 
 class FullHealthDataResponse(BaseModel):
-    """Complete response with every available Google Fit data type."""
     status: str
-    # Activity
     steps: Optional[dict] = None
     distance: Optional[dict] = None
     calories: Optional[dict] = None
@@ -627,15 +616,100 @@ class FullHealthDataResponse(BaseModel):
     move_minutes: Optional[dict] = None
     speed: Optional[dict] = None
     power: Optional[dict] = None
-    # Body
     heart_rate: Optional[dict] = None
     blood_pressure: Optional[dict] = None
     weight: Optional[dict] = None
     height: Optional[dict] = None
     body_temperature: Optional[dict] = None
     oxygen_saturation: Optional[dict] = None
-    # Lifestyle
     sleep: Optional[dict] = None
     hydration: Optional[dict] = None
     nutrition: Optional[dict] = None
     timestamp: str
+
+
+# ============================================================================
+# QUICK MIGRAINE EPISODE LOGGING (Model 1 - Quick Log)
+# Input: quick symptom logging during episode → Output: confirmation
+# ============================================================================
+
+class MigraineEpisodeLog(BaseModel):
+    """Quick migraine episode logging during/after an episode."""
+    user_id: str = Field(..., description="User identifier")
+    intensity: int = Field(..., ge=0, le=10, description="Pain intensity 0-10")
+    symptoms: List[str] = Field(default_factory=list, description="List of symptoms")
+    duration_category: str = Field(default="1-2", description="Duration: < 1h, 1-2h, 2-4h, 4h+")
+    notes: str = Field(default="", description="Additional notes")
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+
+class MigraineEpisodeResponse(BaseModel):
+    """Response for episode logging."""
+    status: str = Field(..., description="success or error")
+    message: str = Field(..., description="Confirmation message")
+    episode_id: Optional[str] = Field(None, description="Saved episode ID")
+    timestamp: str
+
+
+# ============================================================================
+# SAVE PREDICTION TO BIGQUERY
+# ============================================================================
+
+class IntegrationData(BaseModel):
+    sleep_hours: Optional[float] = None
+    sleep_quality: Optional[str] = None
+    alcohol_units: Optional[float] = None
+    alcohol_hours_ago: Optional[float] = None
+    steps: Optional[int] = None
+    heart_rate: Optional[int] = None
+    screen_time_minutes: Optional[int] = None
+    screen_brightness: Optional[float] = None
+    outdoor_brightness: Optional[float] = None
+    weather: Optional[str] = None
+    temperature: Optional[float] = None
+    barometric_pressure: Optional[float] = None
+
+
+class PredictionWithIntegrations(BaseModel):
+    user_id: str
+    name: Optional[str] = None
+    age_bracket: Optional[int] = None
+    session_id: Optional[str] = None
+    prediction: Optional[str] = None
+    confidence: Optional[float] = None
+    all_probabilities: Optional[dict] = None
+    features: MigraineFeatures
+    integrations: Optional[IntegrationData] = None
+    integrations_enabled: Optional[List[str]] = None
+
+
+class SavePredictionResponse(BaseModel):
+    status: str
+    bigquery_saved: bool
+    prediction: str
+    confidence: float
+
+
+class AccumulateRequest(BaseModel):
+    features: MigraineFeatures
+    true_label: str
+
+
+class AccumulateResponse(BaseModel):
+    status: str
+    session_size: int
+    message: str
+
+
+class BatchUpdateResponse(BaseModel):
+    status: str
+    samples_processed: int
+    avg_loss: Optional[float] = None
+    total_updates: int
+    session_cleared: bool
+
+
+class ClearSessionResponse(BaseModel):
+    status: str
+    samples_cleared: int
+    message: str
