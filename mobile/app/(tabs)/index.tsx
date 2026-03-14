@@ -172,15 +172,7 @@ export default function HomeScreen() {
             <Text style={[styles.subtitle, darkMode && styles.subtitleDark]}>How are we feeling today?</Text>
           </View>
 
-          {/* Emergency Button */}
-          <Pressable
-            onPress={() => router.push('/emergency')}
-            style={({ pressed }) => [styles.emergencyButton, darkMode && styles.emergencyButtonDark, pressed && styles.emergencyButtonPressed]}
-          >
-            <Ionicons name="medical" size={40} color="#dc2626" style={styles.emergencyIcon} />
-            <Text style={[styles.emergencyText, darkMode && styles.emergencyTextDark]}>Migraine Help</Text>
-            <Text style={[styles.emergencySubtext, darkMode && styles.emergencySubtextDark]}>Press for immediate migraine relief tips</Text>
-          </Pressable>
+          
 
           {/* AI Chat Card */}
           <Pressable
@@ -204,6 +196,17 @@ export default function HomeScreen() {
 
           {/* Pattern Warnings */}
           <PatternWarnings onPress={handleViewPatterns} maxItems={2} style={styles.warningsContainer} />
+
+          {/* Emergency Button */}
+          <Pressable
+            onPress={() => router.push('/emergency')}
+            style={({ pressed }) => [styles.emergencyButton, darkMode && styles.emergencyButtonDark, pressed && styles.emergencyButtonPressed]}
+          >
+            <Ionicons name="medical" size={40} color="#dc2626" style={styles.emergencyIcon} />
+            <Text style={[styles.emergencyText, darkMode && styles.emergencyTextDark]}>SOS Emergency</Text>
+          </Pressable>
+          
+
 
           {/* Dashboard Heading + Refresh */}
           <View style={styles.dashboardHeadingRow}>
