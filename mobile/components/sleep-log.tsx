@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { API_BASE_URL, API_ENDPOINTS, logAPI } from '@/config/api';
+import { AIInsightButton } from '@/components/AIInsightButton';
 
 interface SleepLogProps {
     onSuccess?: () => void;
@@ -307,6 +308,9 @@ export const SleepLog: React.FC<SleepLogProps> = ({ onSuccess }) => {
                         </Text>
                     </View>
                 </View>
+
+                {/* AI Insight Button */}
+                <AIInsightButton type="sleep" data={result} />
 
                 <Pressable onPress={() => setResult(null)} style={styles.submitButton}>
                     <Text style={styles.submitButtonText}>Assess Again</Text>

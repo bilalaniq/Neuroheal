@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { API_BASE_URL, API_ENDPOINTS, logAPI } from '@/config/api';
+import { AIInsightButton } from '@/components/AIInsightButton';
 
 interface DetailedClassifyProps {
     onSuccess?: () => void;
@@ -89,7 +90,6 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
     };
 
     const handleClassify = async () => {
-        // Inline validation — clears previous errors first
         const newErrors: Partial<Record<keyof FormData, string>> = {};
 
         const ageNum = parseInt(formData.age);
@@ -113,17 +113,15 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
         const endpoint = API_ENDPOINTS.symptomType;
         const url = `${API_BASE_URL}${endpoint}`;
 
-        // Map form values to backend expected values
-        // schemas.py: intensity le=3, location le=1, character le=1
         const intensityMapped = intensityNum <= 3 ? 1 : intensityNum <= 6 ? 2 : 3;
 
         const payload = {
             age: ageNum,
             duration: durationNum,
             frequency: frequencyNum,
-            location: formData.location === 'Unilateral' ? 1 : 0,   // schema: 0-1 only
-            character: formData.character === 'Throbbing' ? 1 : 0,  // schema: 0-1 only
-            intensity: intensityMapped,  // 1-10 UI → 1-3 backend
+            location: formData.location === 'Unilateral' ? 1 : 0,
+            character: formData.character === 'Throbbing' ? 1 : 0,
+            intensity: intensityMapped,
             visual: formData.visual === 'No aura' ? 0 : formData.visual === 'With aura' ? 2 : 1,
             nausea: formData.nausea ? 1 : 0,
             vomit: formData.vomit ? 1 : 0,
@@ -137,17 +135,16 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             hypoacusis: formData.hypoacusis ? 1 : 0,
             diplopia: formData.diplopia ? 1 : 0,
             defect: formData.defect ? 1 : 0,
-            ataxia: 0,  // Required by backend but not in UI
+            ataxia: 0,
             conscience: formData.conscience ? 1 : 0,
             paresthesia: formData.paresthesia ? 1 : 0,
             dpf: formData.dpf ? 1 : 0,
-            // Extended features (all zero)
             ext_1: 0, ext_2: 0, ext_3: 0, ext_4: 0, ext_5: 0,
             ext_6: 0, ext_7: 0, ext_8: 0, ext_9: 0, ext_10: 0,
             ext_11: 0, ext_12: 0, ext_13: 0, ext_14: 0, ext_15: 0,
             ext_16: 0, ext_17: 0, ext_18: 0, ext_19: 0, ext_20: 0,
             ext_21: 0, ext_22: 0, ext_23: 0, ext_24: 0, ext_25: 0,
-            ext_26: 0, ext_27: 0
+            ext_26: 0, ext_27: 0,
         };
 
         logAPI('request', endpoint, payload);
@@ -168,7 +165,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
 
             const data = JSON.parse(responseText);
             console.log('[DetailedClassify] Success:', data);
-            
+
             setResult(data);
             if (onSuccess) onSuccess();
         } catch (error) {
@@ -178,6 +175,38 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             setLoading(false);
         }
     };
+
+    // ── Build enriched data object for AI insight ────────────────────────────
+    const buildInsightData = (res: PredictionResult) => ({
+        prediction: res.prediction,
+        confidence: res.confidence,
+        all_probabilities: res.all_probabilities,
+        // Pass through the form inputs so the AI has full context
+        symptoms: [
+            formData.nausea && 'Nausea',
+            formData.vomit && 'Vomiting',
+            formData.phonophobia && 'Sound Sensitivity',
+            formData.photophobia && 'Light Sensitivity',
+            formData.sensory && 'Sensory Disturbance',
+            formData.dysphasia && 'Speech Difficulty',
+            formData.dysarthria && 'Slurred Speech',
+            formData.vertigo && 'Vertigo',
+            formData.tinnitus && 'Ringing in Ears',
+            formData.hypoacusis && 'Hearing Loss',
+            formData.diplopia && 'Double Vision',
+            formData.defect && 'Visual Field Defect',
+            formData.conscience && 'Loss of Consciousness',
+            formData.paresthesia && 'Tingling/Numbness',
+            formData.dpf && 'Family History',
+        ].filter(Boolean).join(', '),
+        pain_location: formData.location,
+        character: formData.character,
+        visual_aura: formData.visual,
+        intensity: `${formData.intensity}/10`,
+        duration_scale: formData.duration,
+        frequency: `${formData.frequency} episodes/month`,
+        age: formData.age,
+    });
 
     // Results screen
     if (result) {
@@ -189,6 +218,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                 ]}
             >
                 <ScrollView contentContainerStyle={styles.content}>
+                    {/* Result Card */}
                     <View
                         style={[
                             styles.resultCard,
@@ -219,6 +249,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                         </Text>
                     </View>
 
+                    {/* All Probabilities */}
                     <View style={styles.section}>
                         <Text
                             style={[
@@ -229,7 +260,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                             All Probabilities
                         </Text>
                         {Object.entries(result.all_probabilities).map(([type, prob]) => (
-                            prob > 0.01 && ( // Only show probabilities > 1%
+                            prob > 0.01 && (
                                 <View key={type} style={styles.probabilityRow}>
                                     <Text
                                         style={[
@@ -251,6 +282,9 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                             )
                         ))}
                     </View>
+
+                    {/* ── AI Insight Button ── */}
+                    <AIInsightButton type="classify" data={buildInsightData(result)} />
 
                     <Pressable onPress={() => setResult(null)} style={styles.submitButton}>
                         <Text style={styles.submitButtonText}>Classify Again</Text>
@@ -297,12 +331,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             </Text>
 
             <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
+                <Text style={[styles.label, darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' }]}>
                     Age
                 </Text>
                 <TextInput
@@ -315,18 +344,13 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                     placeholderTextColor={darkMode ? '#5a8f7f' : '#a8d5c4'}
                     keyboardType="numeric"
                     value={formData.age}
-                    onChangeText={(text) => { setFormData({ ...formData, age: text }); setErrors({...errors, age: undefined}); }}
+                    onChangeText={(text) => { setFormData({ ...formData, age: text }); setErrors({ ...errors, age: undefined }); }}
                 />
                 {errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
             </View>
 
             <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
+                <Text style={[styles.label, darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' }]}>
                     Duration (0-3 scale)
                 </Text>
                 <TextInput
@@ -339,7 +363,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                     placeholderTextColor={darkMode ? '#5a8f7f' : '#a8d5c4'}
                     keyboardType="numeric"
                     value={formData.duration}
-                    onChangeText={(text) => { setFormData({ ...formData, duration: text }); setErrors({...errors, duration: undefined}); }}
+                    onChangeText={(text) => { setFormData({ ...formData, duration: text }); setErrors({ ...errors, duration: undefined }); }}
                 />
                 {errors.duration
                     ? <Text style={styles.errorText}>{errors.duration}</Text>
@@ -348,12 +372,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             </View>
 
             <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
+                <Text style={[styles.label, darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' }]}>
                     Frequency (episodes/month)
                 </Text>
                 <TextInput
@@ -366,7 +385,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                     placeholderTextColor={darkMode ? '#5a8f7f' : '#a8d5c4'}
                     keyboardType="numeric"
                     value={formData.frequency}
-                    onChangeText={(text) => { setFormData({ ...formData, frequency: text }); setErrors({...errors, frequency: undefined}); }}
+                    onChangeText={(text) => { setFormData({ ...formData, frequency: text }); setErrors({ ...errors, frequency: undefined }); }}
                 />
                 {errors.frequency && <Text style={styles.errorText}>{errors.frequency}</Text>}
             </View>
@@ -382,12 +401,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             </Text>
 
             <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
+                <Text style={[styles.label, darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' }]}>
                     Location
                 </Text>
                 <View style={styles.optionRow}>
@@ -402,12 +416,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                                 (darkMode ? styles.optionButtonSelectedDark : styles.optionButtonSelected),
                             ]}
                         >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    formData.location === option && styles.optionTextSelected,
-                                ]}
-                            >
+                            <Text style={[styles.optionText, formData.location === option && styles.optionTextSelected]}>
                                 {option}
                             </Text>
                         </Pressable>
@@ -416,12 +425,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             </View>
 
             <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
+                <Text style={[styles.label, darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' }]}>
                     Character
                 </Text>
                 <View style={styles.optionRow}>
@@ -436,12 +440,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                                 (darkMode ? styles.optionButtonSelectedDark : styles.optionButtonSelected),
                             ]}
                         >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    formData.character === option && styles.optionTextSelected,
-                                ]}
-                            >
+                            <Text style={[styles.optionText, formData.character === option && styles.optionTextSelected]}>
                                 {option}
                             </Text>
                         </Pressable>
@@ -450,12 +449,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             </View>
 
             <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
+                <Text style={[styles.label, darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' }]}>
                     Intensity (1-10)
                 </Text>
                 <View style={styles.sliderContainer}>
@@ -495,12 +489,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
             </Text>
 
             <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
+                <Text style={[styles.label, darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' }]}>
                     Visual Symptoms
                 </Text>
                 <View style={styles.optionRow}>
@@ -515,12 +504,7 @@ export const DetailedClassify: React.FC<DetailedClassifyProps> = ({ onSuccess })
                                 (darkMode ? styles.optionButtonSelectedDark : styles.optionButtonSelected),
                             ]}
                         >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    formData.visual === option && styles.optionTextSelected,
-                                ]}
-                            >
+                            <Text style={[styles.optionText, formData.visual === option && styles.optionTextSelected]}>
                                 {option}
                             </Text>
                         </Pressable>
@@ -651,6 +635,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#253029',
         borderColor: '#5a8f7f',
         color: '#d4e8e0',
+    },
+    inputError: {
+        borderColor: '#ef4444',
+        borderWidth: 2,
+    },
+    errorText: {
+        color: '#ef4444',
+        fontSize: 12,
+        marginTop: 4,
+        fontWeight: '500',
     },
     optionRow: {
         flexDirection: 'row',
@@ -816,15 +810,5 @@ const styles = StyleSheet.create({
     },
     submitButtonDisabled: {
         opacity: 0.6,
-    },
-    inputError: {
-        borderColor: '#ef4444',
-        borderWidth: 2,
-    },
-    errorText: {
-        color: '#ef4444',
-        fontSize: 12,
-        marginTop: 4,
-        fontWeight: '500',
     },
 });

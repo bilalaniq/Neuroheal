@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { API_BASE_URL, API_ENDPOINTS, logAPI } from '@/config/api';
+import { AIInsightButton } from '@/components/AIInsightButton';
 
 interface MorningCheckProps {
     onSuccess?: () => void;
@@ -332,6 +333,9 @@ export const MorningCheck: React.FC<MorningCheckProps> = ({ onSuccess }) => {
                         </View>
                     </View>
                 )}
+
+                {/* AI Insight Button */}
+                <AIInsightButton type="daily_risk" data={result} />
 
                 <Pressable onPress={() => setResult(null)} style={styles.submitButton}>
                     <Text style={styles.submitButtonText}>Check Again</Text>
