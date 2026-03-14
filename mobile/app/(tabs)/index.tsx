@@ -2,12 +2,14 @@ import { NavigationBar } from '@/components/NavigationBar';
 import { OnboardingScreen } from '@/components/OnboardingScreen';
 import { PatternWarnings } from '@/components/PatternWarnings';
 import { MigraineCalendar } from '@/components/MigraineCalendar';
+import { QuickLog } from '@/components/quick-log';
+import { MigraineReportChart } from '@/components/MigraineReportChart';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { useRealtimeMonitoring } from '@/hooks/useRealtimeMonitoring';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import FloatingMenu from './menu';
 
@@ -22,10 +24,14 @@ const BACKEND_URL = 'http://192.168.37.37:8080';
 
 export default function HomeScreen() {
   const { darkMode } = useTheme();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const router = useRouter();
   const { userData } = useUser();
+  const router = useRouter();
   const realtime = useRealtimeMonitoring(0, { trackSteps: false });
+
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // ── Migraine days state — must be ABOVE early return ──────────────────────
+  const [migraineDays, setMigraineDays] = useState([]);
 
   // ── Real health data from backend ─────────────────────────────────────────
   const [healthData, setHealthData] = useState<{
@@ -48,11 +54,8 @@ export default function HomeScreen() {
     error: null,
   });
 
-  useEffect(() => {
-    fetchHealthData();
-  }, []);
-
-  const fetchHealthData = async () => {
+  // ── fetchHealthData — defined before useEffect ────────────────────────────
+  const fetchHealthData = useCallback(async () => {
     try {
       setHealthData(prev => ({ ...prev, loading: true, error: null }));
 
@@ -97,40 +100,65 @@ export default function HomeScreen() {
     } catch (err: any) {
       setHealthData(prev => ({ ...prev, loading: false, error: 'Could not reach backend' }));
     }
-  };
+  }, []);
 
+  // ── fetchMigraineLogs — defined before useEffect ──────────────────────────
+  const fetchMigraineLogs = useCallback(async (userId: string) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/migraine-episodes/history?user_id=${encodeURIComponent(userId)}`);
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      const formatLocalDate = (timestamp: string) => {
+        const d = new Date(timestamp);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      };
+      const logs = (data.logs || []).map((log: any) => ({
+        date: formatLocalDate(log.timestamp),
+        hasMigraine: true,
+        severity: log.severity ?? (log.intensity <= 3 ? 1 : log.intensity <= 6 ? 2 : log.intensity <= 8 ? 3 : 4),
+        intensity: log.intensity ?? null,
+        duration: log.duration_category === '1-2h' ? 2 : log.duration_category === '2-4h' ? 4 : log.duration_category === '4-8h' ? 6 : log.duration_category === '8h+' ? 9 : 1,
+        duration_category: log.duration_category || '',
+        triggers: log.triggers || [],
+        note: log.notes || '',
+        symptoms: log.symptoms || [],
+        medication: log.medication || [],
+        medication_effectiveness: log.medication_effectiveness ?? null,
+        relief_methods: log.relief_methods || [],
+        pain_location: log.pain_location || '',
+        disability_level: log.disability_level ?? null,
+        warning_signs_before: log.warning_signs_before ?? false,
+        warning_description: log.warning_description || '',
+        timestamp: log.timestamp || '',
+      }));
+      setMigraineDays(logs);
+    } catch (err) {
+      setMigraineDays([]);
+    }
+  }, []);
+
+  // ── All useEffects — must be ABOVE early return ───────────────────────────
+  useEffect(() => {
+    fetchHealthData();
+  }, [fetchHealthData]);
+
+  useEffect(() => {
+    if (userData?.name) {
+      fetchMigraineLogs(userData.name);
+    }
+  }, [userData?.name, fetchMigraineLogs]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleOnboardingComplete = () => setShowOnboarding(false);
+  const handleViewPatterns = () => router.push('/patterns');
 
+  // ── Early return AFTER all hooks ──────────────────────────────────────────
   if (!userData?.integrations) {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
-
-  const handleViewPatterns = () => router.push('/patterns');
-
-  const generateMigraineDays = (days: number = 90) => {
-    const data: any[] = [];
-    const today = new Date();
-    const possibleTriggers = ['stress', 'lack of sleep', 'bright lights', 'loud noises', 'certain foods', 'weather changes', 'hormonal changes', 'skipped meals', 'dehydration', 'screen time'];
-    const possibleSymptoms = ['throbbing pain', 'nausea', 'light sensitivity', 'sound sensitivity', 'visual disturbances', 'dizziness', 'fatigue', 'concentration issues'];
-    const mockNotes = ['Woke up with mild headache, got worse during work meeting', 'Stressful day at work, headache started around lunch', 'Weather was changing, felt pressure building behind eyes', 'Skipped breakfast, headache started mid-morning', 'Long screen time session, eyes felt strained', 'Good day, stayed hydrated and got enough sleep', 'Exercise helped prevent headache today'];
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const hasMigraine = Math.random() < 0.25;
-      let severity = 0, duration = 0, triggers: string[] = [], symptoms: string[] = [], medication: string[] = [];
-      if (hasMigraine) {
-        severity = Math.floor(Math.random() * 4) + 1;
-        duration = Math.floor(Math.random() * 12) + 1;
-        triggers = possibleTriggers.slice(0, Math.floor(Math.random() * 3) + 1);
-        symptoms = possibleSymptoms.slice(0, Math.floor(Math.random() * 4) + 2);
-        if (severity > 2) medication = [['ibuprofen', 'aspirin', 'prescription'], [Math.floor(Math.random() * 3)]];
-      }
-      data.push({ date: date.toISOString().split('T')[0], hasMigraine, severity, duration, triggers, note: mockNotes[Math.floor(Math.random() * mockNotes.length)], symptoms, medication });
-    }
-    return data;
-  };
-
-  const migraineDays = generateMigraineDays();
 
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
@@ -265,7 +293,7 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            {/* Weight — your Mi Scale is syncing! */}
+            {/* Weight */}
             <View style={[styles.dashboardCard, darkMode && styles.dashboardCardDark]}>
               <View style={styles.cardHeader}>
                 <Ionicons name="barbell" size={20} color={darkMode ? '#a8d5c4' : '#2d4a42'} />
@@ -305,6 +333,9 @@ export default function HomeScreen() {
 
           {/* Migraine Calendar */}
           <MigraineCalendar migraineDays={migraineDays} darkMode={darkMode} />
+
+          {/* Migraine Report Chart */}
+          <MigraineReportChart migraineDays={migraineDays} />
 
         </View>
       </ScrollView>

@@ -1,0 +1,453 @@
+[
+  {
+    "user_id": "ddd",
+    "intensity": 4,
+    "severity": 2,
+    "symptoms": [
+      "Visual Aura",
+      "Dizziness",
+      "Neck Pain"
+    ],
+    "triggers": [
+      "Poor Sleep"
+    ],
+    "medication": [
+      "Sumatriptan"
+    ],
+    "medication_effectiveness": 1,
+    "relief_methods": [
+      "Hot compress"
+    ],
+    "pain_location": "Left side",
+    "duration_category": "1-2h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "",
+    "timestamp": "2026-03-13T23:11:57.188Z",
+    "episode_id": "ep_1773425517_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 7,
+    "severity": 3,
+    "symptoms": [
+      "Throbbing",
+      "Nausea",
+      "Photophobia",
+      "Phonophobia"
+    ],
+    "triggers": [
+      "Stress",
+      "Caffeine",
+      "Bright Light"
+    ],
+    "medication": [
+      "Sumatriptan",
+      "Ibuprofen"
+    ],
+    "medication_effectiveness": 3,
+    "relief_methods": [
+      "Dark room",
+      "Sleep / Rest"
+    ],
+    "pain_location": "Right side",
+    "duration_category": "4-8h",
+    "warning_signs_before": true,
+    "warning_description": "Visual zigzag lines 20 minutes before",
+    "notes": "Had a very stressful work deadline",
+    "timestamp": "2026-03-10T08:45:00.000Z",
+    "episode_id": "ep_1773100001_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 9,
+    "severity": 4,
+    "symptoms": [
+      "Throbbing",
+      "Nausea",
+      "Vomiting",
+      "Photophobia",
+      "Phonophobia",
+      "Brain Fog"
+    ],
+    "triggers": [
+      "Stress",
+      "Poor Sleep",
+      "Dehydration",
+      "Skipped Meal"
+    ],
+    "medication": [
+      "Sumatriptan"
+    ],
+    "medication_effectiveness": 2,
+    "relief_methods": [
+      "Dark room",
+      "Cold compress",
+      "Sleep / Rest"
+    ],
+    "pain_location": "Both sides",
+    "duration_category": "8h+",
+    "warning_signs_before": true,
+    "warning_description": "Neck stiffness and yawning for 1 hour before",
+    "notes": "Worst one this month. Couldn't get out of bed.",
+    "timestamp": "2026-03-07T06:20:00.000Z",
+    "episode_id": "ep_1773100002_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 5,
+    "severity": 2,
+    "symptoms": [
+      "Throbbing",
+      "Photophobia",
+      "Dizziness"
+    ],
+    "triggers": [
+      "Weather Change",
+      "Caffeine"
+    ],
+    "medication": [
+      "Paracetamol"
+    ],
+    "medication_effectiveness": 2,
+    "relief_methods": [
+      "Fresh air",
+      "Meditation"
+    ],
+    "pain_location": "Forehead",
+    "duration_category": "2-4h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "Came on suddenly after going outside",
+    "timestamp": "2026-03-03T14:30:00.000Z",
+    "episode_id": "ep_1773100003_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 6,
+    "severity": 3,
+    "symptoms": [
+      "Throbbing",
+      "Nausea",
+      "Neck Pain",
+      "Fatigue"
+    ],
+    "triggers": [
+      "Stress",
+      "Poor Sleep",
+      "Screen Time"
+    ],
+    "medication": [
+      "Ibuprofen"
+    ],
+    "medication_effectiveness": 2,
+    "relief_methods": [
+      "Dark room",
+      "Cold compress"
+    ],
+    "pain_location": "Left side",
+    "duration_category": "4-8h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "Long day on the computer",
+    "timestamp": "2026-02-27T19:00:00.000Z",
+    "episode_id": "ep_1773100004_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 3,
+    "severity": 1,
+    "symptoms": [
+      "Dizziness",
+      "Fatigue"
+    ],
+    "triggers": [
+      "Dehydration"
+    ],
+    "medication": [
+      "Paracetamol"
+    ],
+    "medication_effectiveness": 4,
+    "relief_methods": [
+      "Fresh air"
+    ],
+    "pain_location": "Forehead",
+    "duration_category": "< 1h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "Caught it early, drank water immediately",
+    "timestamp": "2026-02-22T11:15:00.000Z",
+    "episode_id": "ep_1773100005_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 8,
+    "severity": 3,
+    "symptoms": [
+      "Throbbing",
+      "Nausea",
+      "Photophobia",
+      "Visual Aura",
+      "Tingling"
+    ],
+    "triggers": [
+      "Hormonal",
+      "Poor Sleep",
+      "Stress"
+    ],
+    "medication": [
+      "Sumatriptan"
+    ],
+    "medication_effectiveness": 3,
+    "relief_methods": [
+      "Dark room",
+      "Sleep / Rest",
+      "Cold compress"
+    ],
+    "pain_location": "Right side",
+    "duration_category": "4-8h",
+    "warning_signs_before": true,
+    "warning_description": "Tingling in left hand and visual aura 30 min before",
+    "notes": "Monthly pattern \u2014 happens around same time each month",
+    "timestamp": "2026-02-18T07:30:00.000Z",
+    "episode_id": "ep_1773100006_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 5,
+    "severity": 2,
+    "symptoms": [
+      "Neck Pain",
+      "Brain Fog",
+      "Fatigue"
+    ],
+    "triggers": [
+      "Screen Time",
+      "Poor Sleep"
+    ],
+    "medication": [
+      "Ibuprofen"
+    ],
+    "medication_effectiveness": 2,
+    "relief_methods": [
+      "Hot compress",
+      "Meditation"
+    ],
+    "pain_location": "Back of head",
+    "duration_category": "2-4h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "",
+    "timestamp": "2026-02-13T20:45:00.000Z",
+    "episode_id": "ep_1773100007_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 6,
+    "severity": 2,
+    "symptoms": [
+      "Throbbing",
+      "Phonophobia",
+      "Dizziness"
+    ],
+    "triggers": [
+      "Alcohol",
+      "Dehydration"
+    ],
+    "medication": [
+      "Aspirin",
+      "Paracetamol"
+    ],
+    "medication_effectiveness": 2,
+    "relief_methods": [
+      "Sleep / Rest"
+    ],
+    "pain_location": "Both sides",
+    "duration_category": "2-4h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "After social event the night before",
+    "timestamp": "2026-02-09T09:00:00.000Z",
+    "episode_id": "ep_1773100008_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 4,
+    "severity": 2,
+    "symptoms": [
+      "Photophobia",
+      "Brain Fog",
+      "Fatigue"
+    ],
+    "triggers": [
+      "Weather Change",
+      "Stress"
+    ],
+    "medication": [
+      "Paracetamol"
+    ],
+    "medication_effectiveness": 3,
+    "relief_methods": [
+      "Meditation",
+      "Fresh air"
+    ],
+    "pain_location": "Forehead",
+    "duration_category": "1-2h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "",
+    "timestamp": "2026-02-04T15:20:00.000Z",
+    "episode_id": "ep_1773100009_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 7,
+    "severity": 3,
+    "symptoms": [
+      "Throbbing",
+      "Nausea",
+      "Photophobia",
+      "Neck Pain"
+    ],
+    "triggers": [
+      "Stress",
+      "Skipped Meal",
+      "Caffeine"
+    ],
+    "medication": [
+      "Sumatriptan"
+    ],
+    "medication_effectiveness": 3,
+    "relief_methods": [
+      "Dark room",
+      "Sleep / Rest"
+    ],
+    "pain_location": "Left side",
+    "duration_category": "4-8h",
+    "warning_signs_before": true,
+    "warning_description": "Mood change and irritability 2 hours before",
+    "notes": "Busy week at work",
+    "timestamp": "2026-01-29T10:00:00.000Z",
+    "episode_id": "ep_1773100010_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 2,
+    "severity": 1,
+    "symptoms": [
+      "Dizziness",
+      "Fatigue"
+    ],
+    "triggers": [
+      "Dehydration",
+      "Bright Light"
+    ],
+    "medication": [
+      "None taken"
+    ],
+    "medication_effectiveness": null,
+    "relief_methods": [
+      "Fresh air"
+    ],
+    "pain_location": "Forehead",
+    "duration_category": "< 1h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "Very mild, went away on its own",
+    "timestamp": "2026-01-24T13:10:00.000Z",
+    "episode_id": "ep_1773100011_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 8,
+    "severity": 4,
+    "symptoms": [
+      "Throbbing",
+      "Nausea",
+      "Vomiting",
+      "Photophobia",
+      "Visual Aura",
+      "Brain Fog"
+    ],
+    "triggers": [
+      "Hormonal",
+      "Stress",
+      "Poor Sleep",
+      "Skipped Meal"
+    ],
+    "medication": [
+      "Sumatriptan",
+      "Ibuprofen"
+    ],
+    "medication_effectiveness": 2,
+    "relief_methods": [
+      "Dark room",
+      "Cold compress",
+      "Sleep / Rest"
+    ],
+    "pain_location": "Right side",
+    "duration_category": "8h+",
+    "warning_signs_before": true,
+    "warning_description": "Visual aura and nausea 45 minutes before onset",
+    "notes": "Monthly severe episode. Missed work.",
+    "timestamp": "2026-01-19T05:45:00.000Z",
+    "episode_id": "ep_1773100012_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 5,
+    "severity": 2,
+    "symptoms": [
+      "Neck Pain",
+      "Phonophobia",
+      "Fatigue"
+    ],
+    "triggers": [
+      "Screen Time",
+      "Caffeine"
+    ],
+    "medication": [
+      "Ibuprofen"
+    ],
+    "medication_effectiveness": 3,
+    "relief_methods": [
+      "Hot compress",
+      "Meditation"
+    ],
+    "pain_location": "Back of head",
+    "duration_category": "2-4h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "",
+    "timestamp": "2026-01-14T18:30:00.000Z",
+    "episode_id": "ep_1773100013_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 6,
+    "severity": 2,
+    "symptoms": [
+      "Throbbing",
+      "Dizziness",
+      "Brain Fog"
+    ],
+    "triggers": [
+      "Poor Sleep",
+      "Weather Change"
+    ],
+    "medication": [
+      "Paracetamol"
+    ],
+    "medication_effectiveness": 2,
+    "relief_methods": [
+      "Sleep / Rest"
+    ],
+    "pain_location": "Both sides",
+    "duration_category": "2-4h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "Woke up with it",
+    "timestamp": "2026-01-08T07:00:00.000Z",
+    "episode_id": "ep_1773100014_ddd"
+  }
+]

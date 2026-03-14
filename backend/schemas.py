@@ -9,39 +9,32 @@ from datetime import datetime
 
 # ============================================================================
 # MIGRAINE SYMPTOM CLASSIFICATION (model 1)
-# Input: symptoms during an episode → Output: migraine type
 # ============================================================================
 
 class MigraineFeatures(BaseModel):
-    """Input features for migraine type classification."""
-
-    age: int = Field(..., ge=0, le=120, description="Patient age")
-    duration: int = Field(..., ge=0, le=3, description="Duration of headache (0-3 scale)")
-    frequency: int = Field(..., ge=0, le=7, description="Frequency of episodes (0-7 scale)")
-    location: int = Field(..., ge=0, le=1, description="Pain location: 1=unilateral, 2=bilateral")
-    character: int = Field(..., ge=0, le=1, description="Pain character: 1=pulsating, 2=pressing")
-    intensity: int = Field(..., ge=0, le=3, description="Pain intensity: 1=mild, 2=moderate, 3=severe")
-
-    # Symptoms (binary 0/1)
+    age: int = Field(..., ge=0, le=120)
+    duration: int = Field(..., ge=0, le=3)
+    frequency: int = Field(..., ge=0, le=7)
+    location: int = Field(..., ge=0, le=1)
+    character: int = Field(..., ge=0, le=1)
+    intensity: int = Field(..., ge=0, le=3)
     nausea: int = Field(..., ge=0, le=1)
     vomit: int = Field(..., ge=0, le=1)
-    phonophobia: int = Field(..., ge=0, le=1, description="Sound sensitivity")
-    photophobia: int = Field(..., ge=0, le=1, description="Light sensitivity")
-    visual: int = Field(..., ge=0, le=3, description="Visual disturbance: 0=none, 1=partial, 2=full")
+    phonophobia: int = Field(..., ge=0, le=1)
+    photophobia: int = Field(..., ge=0, le=1)
+    visual: int = Field(..., ge=0, le=3)
     sensory: int = Field(..., ge=0, le=1)
-    dysphasia: int = Field(..., ge=0, le=1, description="Speech difficulty")
-    dysarthria: int = Field(..., ge=0, le=1, description="Slurred speech")
+    dysphasia: int = Field(..., ge=0, le=1)
+    dysarthria: int = Field(..., ge=0, le=1)
     vertigo: int = Field(..., ge=0, le=1)
-    tinnitus: int = Field(..., ge=0, le=1, description="Ringing ears")
-    hypoacusis: int = Field(..., ge=0, le=1, description="Hearing loss")
-    diplopia: int = Field(..., ge=0, le=1, description="Double vision")
-    defect: int = Field(..., ge=0, le=1, description="Visual field defect")
+    tinnitus: int = Field(..., ge=0, le=1)
+    hypoacusis: int = Field(..., ge=0, le=1)
+    diplopia: int = Field(..., ge=0, le=1)
+    defect: int = Field(..., ge=0, le=1)
     ataxia: int = Field(default=0, ge=0, le=1)
-    conscience: int = Field(..., ge=0, le=1, description="Loss of consciousness")
-    paresthesia: int = Field(..., ge=0, le=1, description="Tingling/numbness")
-    dpf: int = Field(..., ge=0, le=1, description="Family history of migraine")
-
-    # Extended features (24-50) for future use — default 0
+    conscience: int = Field(..., ge=0, le=1)
+    paresthesia: int = Field(..., ge=0, le=1)
+    dpf: int = Field(..., ge=0, le=1)
     ext_1: int = Field(default=0, ge=0, le=100)
     ext_2: int = Field(default=0, ge=0, le=100)
     ext_3: int = Field(default=0, ge=0, le=100)
@@ -71,7 +64,6 @@ class MigraineFeatures(BaseModel):
     ext_27: int = Field(default=0, ge=0, le=100)
 
     def to_tensor(self):
-        """Convert to ordered list of 50 features for model input."""
         return [
             self.age, self.duration, self.frequency, self.location,
             self.character, self.intensity, self.nausea, self.vomit,
@@ -101,32 +93,23 @@ class MigraineFeatures(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """Response from migraine type classification endpoint."""
-    prediction: str = Field(..., description="Predicted migraine type")
+    prediction: str
     confidence: float = Field(..., ge=0, le=1)
-    all_probabilities: dict = Field(..., description="Probabilities for all 8 classes")
+    all_probabilities: dict
     timestamp: str
 
 
 # ============================================================================
 # MIGRAINE OCCURRENCE PREDICTION (model 2)
-# Input: daily trigger checklist → Output: migraine yes/no + risk score
 # ============================================================================
 
 class MigraineTriggerRequest(BaseModel):
-    """
-    Daily trigger checklist filled by the user each morning.
-    Rate each trigger on a scale: 0=not present, 1=mild, 2=moderate, 3=high, 4=severe
-    """
-    # Environmental triggers
     cold_air_exposure: int = Field(default=0, ge=0, le=4)
     perfume_or_strong_odors: int = Field(default=0, ge=0, le=4)
     bright_or_flashing_lights: int = Field(default=0, ge=0, le=4)
     loud_sounds: int = Field(default=0, ge=0, le=4)
     changing_weather: int = Field(default=0, ge=0, le=4)
     hot_and_humid_weather: int = Field(default=0, ge=0, le=4)
-
-    # Lifestyle triggers
     physical_exertion: int = Field(default=0, ge=0, le=4)
     overslept: int = Field(default=0, ge=0, le=4)
     lack_of_sleep: int = Field(default=0, ge=0, le=4)
@@ -134,10 +117,8 @@ class MigraineTriggerRequest(BaseModel):
     post_stress_letdown: int = Field(default=0, ge=0, le=4)
     missed_a_meal: int = Field(default=0, ge=0, le=4)
     dehydration: int = Field(default=0, ge=0, le=4)
-
-    # Food triggers
-    nightshade_vegetables: int = Field(default=0, ge=0, le=4, description="Tomatoes, eggplants, potatoes, peppers")
-    smoked_or_cured_meat: int = Field(default=0, ge=0, le=4, description="Hot dogs, etc.")
+    nightshade_vegetables: int = Field(default=0, ge=0, le=4)
+    smoked_or_cured_meat: int = Field(default=0, ge=0, le=4)
     bananas: int = Field(default=0, ge=0, le=4)
     caffeine: int = Field(default=0, ge=0, le=4)
     citrus_fruit_or_juice: int = Field(default=0, ge=0, le=4)
@@ -147,10 +128,8 @@ class MigraineTriggerRequest(BaseModel):
     red_wine: int = Field(default=0, ge=0, le=4)
     liquor_or_spirits: int = Field(default=0, ge=0, le=4)
     sugar_and_sweets: int = Field(default=0, ge=0, le=4)
-
-    # Previous day context
-    prev_day_migraine: int = Field(default=0, ge=0, le=1, description="Did you have a migraine yesterday?")
-    is_weekend: Optional[int] = Field(default=None, ge=0, le=1, description="Leave null to auto-calculate")
+    prev_day_migraine: int = Field(default=0, ge=0, le=1)
+    is_weekend: Optional[int] = Field(default=None, ge=0, le=1)
 
     class Config:
         schema_extra = {
@@ -165,36 +144,28 @@ class MigraineTriggerRequest(BaseModel):
 
 
 class MigrainePredictionResponse(BaseModel):
-    """Response from daily migraine occurrence prediction endpoint."""
-    migraine_predicted: bool = Field(..., description="True if migraine is likely today")
-    risk_level: str = Field(..., description="LOW / MEDIUM / HIGH")
-    probability: float = Field(..., ge=0, le=1, description="Probability of migraine (0-1)")
-    top_triggers: List[str] = Field(..., description="Top contributing triggers today")
-    recommendation: str = Field(..., description="Actionable advice based on risk")
+    migraine_predicted: bool
+    risk_level: str
+    probability: float = Field(..., ge=0, le=1)
+    top_triggers: List[str]
+    recommendation: str
     timestamp: str
 
 
 # ============================================================================
 # SLEEP ASSESSMENT (model 3)
-# Input: last night's sleep metrics → Output: migraine-like sleep pattern or not
 # ============================================================================
 
 class SleepAssessmentRequest(BaseModel):
-    """
-    Sleep metrics from last night.
-    Can be filled manually or pulled automatically from Google Fit.
-    """
-    total_sleep_minutes: float = Field(..., ge=0, le=900, description="Total sleep time in minutes")
-    sleep_onset_minutes: float = Field(..., ge=0, le=180, description="Time to fall asleep in minutes")
-    rem_percent: float = Field(..., ge=0, le=100, description="% of sleep in REM stage")
-    deep_sleep_percent: float = Field(..., ge=0, le=100, description="% of sleep in deep/N3 stage")
-
-    # Optional — pulled from Google Fit if available
-    n2_percent: Optional[float] = Field(default=None, ge=0, le=100, description="% light sleep N2")
-    n1_percent: Optional[float] = Field(default=None, ge=0, le=100, description="% light sleep N1")
-    wake_percent: Optional[float] = Field(default=None, ge=0, le=100, description="% time awake during night")
-    sleep_efficiency: Optional[float] = Field(default=None, ge=0, le=100, description="Sleep efficiency %")
-    psqi_score: Optional[float] = Field(default=None, ge=0, le=21, description="PSQI global score (0-21). Higher = worse sleep.")
+    total_sleep_minutes: float = Field(..., ge=0, le=900)
+    sleep_onset_minutes: float = Field(..., ge=0, le=180)
+    rem_percent: float = Field(..., ge=0, le=100)
+    deep_sleep_percent: float = Field(..., ge=0, le=100)
+    n2_percent: Optional[float] = Field(default=None, ge=0, le=100)
+    n1_percent: Optional[float] = Field(default=None, ge=0, le=100)
+    wake_percent: Optional[float] = Field(default=None, ge=0, le=100)
+    sleep_efficiency: Optional[float] = Field(default=None, ge=0, le=100)
+    psqi_score: Optional[float] = Field(default=None, ge=0, le=21)
 
     class Config:
         schema_extra = {
@@ -210,45 +181,39 @@ class SleepAssessmentRequest(BaseModel):
 
 
 class SleepAssessmentResponse(BaseModel):
-    """Response from sleep assessment endpoint."""
-    classification: str = Field(..., description="'Migraine-like' or 'Normal-like'")
-    risk_score: float = Field(..., ge=0, le=1, description="0=healthy sleep, 1=migraine-like sleep")
-    metrics_comparison: dict = Field(..., description="Your values vs migraine patient averages vs healthy averages")
-    warnings: List[str] = Field(..., description="Specific sleep issues found")
-    recommendation: str = Field(..., description="Actionable sleep advice")
+    classification: str
+    risk_score: float = Field(..., ge=0, le=1)
+    metrics_comparison: dict
+    warnings: List[str]
+    recommendation: str
     timestamp: str
 
 
 # ============================================================================
-# COMBINED ENDPOINT — all 3 models in one call
+# COMBINED ENDPOINT
 # ============================================================================
 
 class FullMigraineAssessmentRequest(BaseModel):
-    """
-    Send all data at once for a complete migraine risk assessment.
-    sleep_data and trigger_data are both optional — only available models will run.
-    """
-    symptom_data: Optional[MigraineFeatures] = Field(default=None, description="For migraine type classification")
-    trigger_data: Optional[MigraineTriggerRequest] = Field(default=None, description="For daily occurrence prediction")
-    sleep_data: Optional[SleepAssessmentRequest] = Field(default=None, description="For sleep risk assessment")
+    symptom_data: Optional[MigraineFeatures] = None
+    trigger_data: Optional[MigraineTriggerRequest] = None
+    sleep_data: Optional[SleepAssessmentRequest] = None
 
 
 class FullMigraineAssessmentResponse(BaseModel):
-    """Combined response from all 3 models."""
     symptom_classification: Optional[PredictionResponse] = None
     migraine_prediction: Optional[MigrainePredictionResponse] = None
     sleep_assessment: Optional[SleepAssessmentResponse] = None
-    overall_risk: str = Field(..., description="Combined risk summary: LOW / MEDIUM / HIGH")
+    overall_risk: str
     timestamp: str
 
 
 # ============================================================================
-# ONLINE LEARNING (update model with confirmed label)
+# ONLINE LEARNING
 # ============================================================================
 
 class UpdateRequest(BaseModel):
     features: MigraineFeatures
-    true_label: str = Field(..., description="Confirmed migraine type")
+    true_label: str
     force_update: bool = Field(default=False)
 
 
@@ -280,7 +245,7 @@ class HealthResponse(BaseModel):
 
 
 # ============================================================================
-# CHAT (Gemini)
+# CHAT
 # ============================================================================
 
 class ChatRequest(BaseModel):
@@ -294,7 +259,69 @@ class ChatResponse(BaseModel):
 
 
 # ============================================================================
-# GOOGLE FIT — Health Data Schemas (unchanged)
+# QUICK MIGRAINE EPISODE LOGGING
+# ============================================================================
+
+class MigraineEpisodeLog(BaseModel):
+    """Log a new migraine episode."""
+    user_id: str = Field(..., description="User identifier")
+    intensity: int = Field(..., ge=0, le=10)
+    severity: Optional[int] = Field(default=None, ge=0, le=4)
+    symptoms: List[str] = Field(default_factory=list)
+    triggers: List[str] = Field(default_factory=list)
+    medication: List[str] = Field(default_factory=list)
+    medication_effectiveness: Optional[int] = Field(default=None, ge=0, le=4)
+    relief_methods: List[str] = Field(default_factory=list)
+    pain_location: Optional[str] = Field(default=None)
+    duration_category: str = Field(default="1-2h")
+    warning_signs_before: bool = Field(default=False)
+    warning_description: Optional[str] = Field(default=None)
+    notes: str = Field(default="")
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+
+class MigraineEpisodeUpdate(BaseModel):
+    """
+    Partial update schema for editing an existing episode.
+
+    All fields are Optional — only fields included in the request
+    body will be updated (partial / PATCH-style update via PUT).
+    The episode_id is taken from the URL path, not the body.
+    """
+    intensity: Optional[int] = Field(default=None, ge=0, le=10)
+    severity: Optional[int] = Field(default=None, ge=0, le=4)
+    symptoms: Optional[List[str]] = None
+    triggers: Optional[List[str]] = None
+    medication: Optional[List[str]] = None
+    medication_effectiveness: Optional[int] = Field(default=None, ge=0, le=4)
+    relief_methods: Optional[List[str]] = None
+    pain_location: Optional[str] = None
+    duration_category: Optional[str] = None
+    warning_signs_before: Optional[bool] = None
+    warning_description: Optional[str] = None
+    notes: Optional[str] = None
+
+    class Config:
+        # Allow partial updates — only set fields are included in .dict(exclude_unset=True)
+        schema_extra = {
+            "example": {
+                "intensity": 7,
+                "symptoms": ["Throbbing", "Nausea"],
+                "notes": "Updated after episode ended"
+            }
+        }
+
+
+class MigraineEpisodeResponse(BaseModel):
+    """Response for episode logging."""
+    status: str
+    message: str
+    episode_id: Optional[str] = None
+    timestamp: str
+
+
+# ============================================================================
+# GOOGLE FIT — Health Data Schemas
 # ============================================================================
 
 class StepsData(BaseModel):
@@ -625,29 +652,6 @@ class FullHealthDataResponse(BaseModel):
     sleep: Optional[dict] = None
     hydration: Optional[dict] = None
     nutrition: Optional[dict] = None
-    timestamp: str
-
-
-# ============================================================================
-# QUICK MIGRAINE EPISODE LOGGING (Model 1 - Quick Log)
-# Input: quick symptom logging during episode → Output: confirmation
-# ============================================================================
-
-class MigraineEpisodeLog(BaseModel):
-    """Quick migraine episode logging during/after an episode."""
-    user_id: str = Field(..., description="User identifier")
-    intensity: int = Field(..., ge=0, le=10, description="Pain intensity 0-10")
-    symptoms: List[str] = Field(default_factory=list, description="List of symptoms")
-    duration_category: str = Field(default="1-2", description="Duration: < 1h, 1-2h, 2-4h, 4h+")
-    notes: str = Field(default="", description="Additional notes")
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-
-
-class MigraineEpisodeResponse(BaseModel):
-    """Response for episode logging."""
-    status: str = Field(..., description="success or error")
-    message: str = Field(..., description="Confirmation message")
-    episode_id: Optional[str] = Field(None, description="Saved episode ID")
     timestamp: str
 
 

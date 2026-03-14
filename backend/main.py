@@ -1,23 +1,19 @@
 """
 FastAPI backend — Google Fit health data + Migraine ML models.
-
-New endpoints added:
-  POST /predict/symptom-type     → classify migraine type from symptoms
-  POST /predict/migraine-today   → predict if migraine will occur today (triggers)
-  POST /predict/sleep            → assess sleep risk pattern
-  POST /predict/full             → run all 3 models in one call
 """
 
 import logging
+import json
 from datetime import datetime, timedelta
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from google_fit_service import GoogleFitService
 from migraine_service import MigraineService
 from schemas import (
-    # Migraine prediction schemas
     MigraineFeatures,
     PredictionResponse,
     MigraineTriggerRequest,
@@ -28,10 +24,9 @@ from schemas import (
     FullMigraineAssessmentResponse,
     UpdateRequest,
     UpdateResponse,
-    # Episode logging
     MigraineEpisodeLog,
     MigraineEpisodeResponse,
-    # Google Fit schemas
+    MigraineEpisodeUpdate,        # ← NEW
     HealthResponse,
     StepsResponse,
     SleepResponse,
@@ -63,6 +58,20 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# ── Migraine logs file ───────────────────────────────────────────────────────
+MIGRAINE_LOGS_FILE = Path("migraine_logs.json")
+
+def load_migraine_logs():
+    if MIGRAINE_LOGS_FILE.exists():
+        with MIGRAINE_LOGS_FILE.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+def save_migraine_logs(logs):
+    with MIGRAINE_LOGS_FILE.open("w", encoding="utf-8") as f:
+        json.dump(logs, f, indent=2)
+
+# ── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -71,7 +80,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global service instances
+# ── Global service instances ─────────────────────────────────────────────────
 google_fit_service: GoogleFitService = None
 migraine_service: MigraineService = None
 
@@ -84,15 +93,12 @@ async def startup_event():
     logger.info("STARTING MIGRAINE CLASSIFIER API v2.0")
     logger.info("=" * 60)
 
-    # ── Load migraine ML models ──────────────────────────────────────────────
     try:
         migraine_service = MigraineService()
-        ready = migraine_service.is_ready
-        logger.info(f"✓ Migraine models loaded: {ready}")
+        logger.info(f"✓ Migraine models loaded: {migraine_service.is_ready}")
     except Exception as e:
         logger.warning(f"⚠ Migraine service init failed: {e}")
 
-    # ── Google Fit ───────────────────────────────────────────────────────────
     if settings.USE_GOOGLE_FIT:
         try:
             google_fit_service = GoogleFitService(
@@ -127,59 +133,156 @@ async def health_check():
 
 @app.get("/models/status")
 async def model_status():
-    """Check which ML models are loaded and ready."""
     if migraine_service is None:
         return {"status": "not_loaded", "models": {}}
     return {"status": "ok", "models": migraine_service.is_ready}
 
 
 # ============================================================================
-# MODEL 1 — QUICK EPISODE LOGGING
-# Fast logging during or immediately after a migraine episode.
-# POST /migraine-episodes
+# EPISODE LOGGING
+#
+#  POST   /migraine-episodes              — log a new episode
+#                                           → 409 if already logged today (with existing log in body)
+#  GET    /migraine-episodes/history      — get all episodes for a user (feeds calendar)
+#  PUT    /migraine-episodes/{episode_id} — update / edit an existing episode
 # ============================================================================
 
-@app.post("/migraine-episodes", response_model=MigraineEpisodeResponse)
+@app.post("/migraine-episodes")
 async def log_migraine_episode(episode: MigraineEpisodeLog):
     """
-    Quick migraine episode logging.
+    Log a new migraine episode.
 
-    Input: MigraineEpisodeLog (user_id, intensity, symptoms, duration, notes)
-    Output: Confirmation of saved episode
+    Returns 409 if the user already has a log for today, so the frontend
+    can offer them the option to edit the existing entry instead.
+    The 409 body contains the existing log under the key `existing_log`.
     """
     try:
-        logger.info(f"Logged migraine episode for user {episode.user_id}: intensity={episode.intensity}, symptoms={episode.symptoms}")
-        
-        return MigraineEpisodeResponse(
-            status="success",
-            message="Migraine episode logged successfully",
-            episode_id=f"ep_{int(datetime.utcnow().timestamp())}_{episode.user_id}",
-            timestamp=datetime.utcnow().isoformat()
+        logs = load_migraine_logs()
+        today = datetime.utcnow().date().isoformat()
+
+        # Find any existing log for this user today
+        existing_today = [
+            log for log in logs
+            if log["user_id"] == episode.user_id
+            and log.get("timestamp", "").startswith(today)
+        ]
+
+        if existing_today:
+            # Return 409 with the existing log so the frontend can pre-fill the edit form
+            existing = existing_today[-1]   # most recent one today
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "status": "duplicate",
+                    "message": f"You already logged a migraine episode today ({today}). Would you like to edit it instead?",
+                    "existing_log": existing,   # full log dict including episode_id
+                }
+            )
+
+        # Build and persist new log entry
+        log_entry = episode.dict()
+        log_entry["episode_id"] = f"ep_{int(datetime.utcnow().timestamp())}_{episode.user_id}"
+        logs.append(log_entry)
+        save_migraine_logs(logs)
+
+        logger.info(
+            f"Logged migraine episode for user {episode.user_id}: "
+            f"intensity={episode.intensity}, symptoms={episode.symptoms}"
         )
+
+        return {
+            "status": "success",
+            "message": "Migraine episode logged successfully",
+            "episode_id": log_entry["episode_id"],
+            "timestamp": log_entry["timestamp"],
+        }
+
     except Exception as e:
-        logger.error(f"Error in /migraine-episodes: {e}")
+        logger.error(f"Error in POST /migraine-episodes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/migraine-episodes/{episode_id}")
+async def update_migraine_episode(episode_id: str, update: MigraineEpisodeUpdate):
+    """
+    Edit an existing migraine episode.
+
+    Finds the record by episode_id, merges the updated fields, and saves.
+    Only fields included in the request body are updated (partial update).
+    """
+    try:
+        logs = load_migraine_logs()
+
+        # Find the log to update
+        idx = next(
+            (i for i, log in enumerate(logs) if log.get("episode_id") == episode_id),
+            None
+        )
+
+        if idx is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Episode '{episode_id}' not found."
+            )
+
+        existing = logs[idx]
+
+        # Merge — only overwrite fields that were explicitly sent (exclude_unset)
+        updated_fields = update.dict(exclude_unset=True)
+        existing.update(updated_fields)
+
+        # Record that this was edited and when
+        existing["last_edited"] = datetime.utcnow().isoformat()
+
+        logs[idx] = existing
+        save_migraine_logs(logs)
+
+        logger.info(
+            f"Updated migraine episode {episode_id} for user {existing.get('user_id')}: "
+            f"fields changed={list(updated_fields.keys())}"
+        )
+
+        return {
+            "status": "success",
+            "message": "Migraine episode updated successfully",
+            "episode_id": episode_id,
+            "timestamp": existing["last_edited"],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in PUT /migraine-episodes/{episode_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/migraine-episodes/history")
+async def get_migraine_history(user_id: str = Query(...)):
+    """
+    Retrieve all logged migraine episodes for a user.
+    Used by the calendar on the home screen to show migraine days.
+    """
+    try:
+        logs = load_migraine_logs()
+        user_logs = [log for log in logs if log["user_id"] == user_id]
+        return {"logs": user_logs}
+    except Exception as e:
+        logger.error(f"Error in /migraine-episodes/history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
 # MODEL 1 — MIGRAINE TYPE CLASSIFICATION
-# User fills in their symptoms during/after a migraine episode.
 # POST /predict/symptom-type
 # ============================================================================
 
 @app.post("/predict/symptom-type", response_model=PredictionResponse)
 async def predict_symptom_type(features: MigraineFeatures):
-    """
-    Classify the type of migraine based on symptoms reported during an episode.
-
-    Input: MigraineFeatures (age, duration, nausea, visual aura, etc.)
-    Output: Predicted migraine type + confidence + all class probabilities
-    """
+    """Classify the type of migraine based on symptoms."""
     if migraine_service is None or not migraine_service.is_ready["symptom_model"]:
-        raise HTTPException(status_code=503, detail="Symptom classification model not loaded. Run migraine_symptom_classification_train.py first.")
+        raise HTTPException(status_code=503, detail="Symptom classification model not loaded.")
 
     try:
-        # Map Pydantic schema → dict with training column names (Title Case)
         feature_dict = {
             "Age": features.age,
             "Duration": features.duration,
@@ -205,10 +308,8 @@ async def predict_symptom_type(features: MigraineFeatures):
             "Paresthesia": features.paresthesia,
             "DPF": features.dpf,
         }
-
         result = migraine_service.predict_migraine_type(feature_dict)
         return PredictionResponse(**result)
-
     except Exception as e:
         logger.error(f"Error in /predict/symptom-type: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -216,26 +317,19 @@ async def predict_symptom_type(features: MigraineFeatures):
 
 # ============================================================================
 # MODEL 2 — DAILY MIGRAINE OCCURRENCE PREDICTION
-# User fills in their daily trigger checklist each morning.
 # POST /predict/migraine-today
 # ============================================================================
 
 @app.post("/predict/migraine-today", response_model=MigrainePredictionResponse)
 async def predict_migraine_today(triggers: MigraineTriggerRequest):
-    """
-    Predict if a migraine is likely to occur today based on daily trigger exposure.
-
-    Input: MigraineTriggerRequest (stress level, sleep quality, food triggers, etc.)
-    Output: migraine_predicted (bool), risk_level (LOW/MEDIUM/HIGH), probability, top_triggers
-    """
+    """Predict if a migraine is likely today based on trigger exposure."""
     if migraine_service is None or not migraine_service.is_ready["trigger_model"]:
-        raise HTTPException(status_code=503, detail="Trigger prediction model not loaded. Run migraine_data_train.py first.")
+        raise HTTPException(status_code=503, detail="Trigger prediction model not loaded.")
 
     try:
         trigger_dict = triggers.dict()
         result = migraine_service.predict_migraine_today(trigger_dict)
         return MigrainePredictionResponse(**result)
-
     except Exception as e:
         logger.error(f"Error in /predict/migraine-today: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -243,26 +337,19 @@ async def predict_migraine_today(triggers: MigraineTriggerRequest):
 
 # ============================================================================
 # MODEL 3 — SLEEP RISK ASSESSMENT
-# User fills in last night's sleep metrics (or auto-pulled from Google Fit).
 # POST /predict/sleep
 # ============================================================================
 
 @app.post("/predict/sleep", response_model=SleepAssessmentResponse)
 async def assess_sleep(sleep_data: SleepAssessmentRequest):
-    """
-    Assess whether your sleep pattern resembles migraine patients.
-
-    Input: SleepAssessmentRequest (total sleep, REM %, deep sleep %, onset time, etc.)
-    Output: classification (Migraine-like / Normal-like), risk score, comparison table, warnings
-    """
+    """Assess whether sleep pattern resembles migraine patients."""
     if migraine_service is None or not migraine_service.is_ready["sleep_reference"]:
-        raise HTTPException(status_code=503, detail="Sleep reference values not loaded. Run sleep_train.py first.")
+        raise HTTPException(status_code=503, detail="Sleep reference values not loaded.")
 
     try:
         sleep_dict = sleep_data.dict()
         result = migraine_service.assess_sleep(sleep_dict)
         return SleepAssessmentResponse(**result)
-
     except Exception as e:
         logger.error(f"Error in /predict/sleep: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -275,13 +362,7 @@ async def assess_sleep(sleep_data: SleepAssessmentRequest):
 
 @app.post("/predict/full", response_model=FullMigraineAssessmentResponse)
 async def full_assessment(request: FullMigraineAssessmentRequest):
-    """
-    Run all available models in a single request.
-    Any of symptom_data, trigger_data, sleep_data can be null — 
-    only the models with data will run.
-
-    Returns combined risk level (LOW / MEDIUM / HIGH) plus individual results.
-    """
+    """Run all available models in a single request."""
     if migraine_service is None:
         raise HTTPException(status_code=503, detail="Migraine service not initialized.")
 
@@ -312,24 +393,19 @@ async def full_assessment(request: FullMigraineAssessmentRequest):
             overall_risk=result["overall_risk"],
             timestamp=result["timestamp"],
         )
-
     except Exception as e:
         logger.error(f"Error in /predict/full: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
-# BONUS — AUTO SLEEP FROM GOOGLE FIT → SLEEP ASSESSMENT
-# GET /predict/sleep-from-fit?days=1
+# AUTO SLEEP FROM GOOGLE FIT → SLEEP ASSESSMENT
+# GET /predict/sleep-from-fit
 # ============================================================================
 
 @app.get("/predict/sleep-from-fit")
 async def sleep_assessment_from_fit(days: int = 1):
-    """
-    Pull last night's sleep from Google Fit automatically,
-    then run the sleep assessment model on it.
-    No manual input needed if the user has a smartwatch synced.
-    """
+    """Pull last night's sleep from Google Fit and run the sleep assessment."""
     if google_fit_service is None:
         raise HTTPException(status_code=503, detail="Google Fit not configured.")
     if migraine_service is None or not migraine_service.is_ready["sleep_reference"]:
@@ -341,13 +417,11 @@ async def sleep_assessment_from_fit(days: int = 1):
         fit_sleep = google_fit_service.get_sleep(start_date, end_date, days)
 
         if not fit_sleep.get("sleep_records"):
-            raise HTTPException(status_code=404, detail="No sleep data found in Google Fit for this period.")
+            raise HTTPException(status_code=404, detail="No sleep data found in Google Fit.")
 
-        # Convert Google Fit sleep records to assessment input
         records = fit_sleep["sleep_records"]
         total_minutes = fit_sleep.get("total_sleep_minutes", 0)
 
-        # Calculate stage percentages from records
         stage_minutes = {"REM sleep": 0, "Deep sleep": 0, "Light sleep": 0, "Awake": 0}
         for rec in records:
             stage = rec.get("stage", "")
@@ -359,7 +433,7 @@ async def sleep_assessment_from_fit(days: int = 1):
 
         sleep_input = {
             "total_sleep_minutes": total_minutes,
-            "sleep_onset_minutes": None,  # Not available from Google Fit
+            "sleep_onset_minutes": None,
             "rem_percent": round(stage_minutes["REM sleep"] / total_recorded * 100, 1),
             "deep_sleep_percent": round(stage_minutes["Deep sleep"] / total_recorded * 100, 1),
             "wake_percent": round(stage_minutes["Awake"] / total_recorded * 100, 1),
@@ -375,7 +449,6 @@ async def sleep_assessment_from_fit(days: int = 1):
             },
             "sleep_assessment": assessment,
         }
-
     except HTTPException:
         raise
     except Exception as e:
@@ -384,7 +457,7 @@ async def sleep_assessment_from_fit(days: int = 1):
 
 
 # ============================================================================
-# GOOGLE FIT ENDPOINTS (unchanged)
+# GOOGLE FIT ENDPOINTS
 # ============================================================================
 
 @app.get("/health/steps", response_model=StepsResponse)
@@ -393,8 +466,7 @@ async def get_steps(days: int = 30):
         raise HTTPException(status_code=503, detail="Google Fit service not configured")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        result = google_fit_service.get_steps(start_date, end_date, days)
+        result = google_fit_service.get_steps(end_date - timedelta(days=days), end_date, days)
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("message"))
         return result
@@ -410,8 +482,7 @@ async def get_sleep(days: int = 30):
         raise HTTPException(status_code=503, detail="Google Fit service not configured")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        result = google_fit_service.get_sleep(start_date, end_date, days)
+        result = google_fit_service.get_sleep(end_date - timedelta(days=days), end_date, days)
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("message"))
         return result
@@ -427,8 +498,7 @@ async def get_heart_rate(days: int = 30):
         raise HTTPException(status_code=503, detail="Google Fit service not configured")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        result = google_fit_service.get_heart_rate(start_date, end_date, days)
+        result = google_fit_service.get_heart_rate(end_date - timedelta(days=days), end_date, days)
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("message"))
         return result
@@ -444,8 +514,7 @@ async def get_blood_pressure(days: int = 30):
         raise HTTPException(status_code=503, detail="Google Fit service not configured")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        result = google_fit_service.get_blood_pressure(start_date, end_date, days)
+        result = google_fit_service.get_blood_pressure(end_date - timedelta(days=days), end_date, days)
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("message"))
         return result
@@ -461,8 +530,7 @@ async def get_weight(days: int = 30):
         raise HTTPException(status_code=503, detail="Google Fit service not configured")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        result = google_fit_service.get_weight(start_date, end_date, days)
+        result = google_fit_service.get_weight(end_date - timedelta(days=days), end_date, days)
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("message"))
         return result
@@ -478,8 +546,7 @@ async def get_all_health_data(days: int = 30):
         raise HTTPException(status_code=503, detail="Google Fit service not configured")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        result = google_fit_service.get_all_health_data(start_date, end_date, days)
+        result = google_fit_service.get_all_health_data(end_date - timedelta(days=days), end_date, days)
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("message"))
         return result
@@ -670,8 +737,7 @@ async def get_full_health_data(days: int = 30):
         raise HTTPException(status_code=503, detail="Google Fit service not configured")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-        result = google_fit_service.get_full_health_data(start_date, end_date, days)
+        result = google_fit_service.get_full_health_data(end_date - timedelta(days=days), end_date, days)
         if result.get("status") == "error":
             raise HTTPException(status_code=500, detail=result.get("message"))
         return result
