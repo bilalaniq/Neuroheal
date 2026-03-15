@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    Pressable,
-    ScrollView,
+    View, Text, StyleSheet, Pressable, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useRouter } from 'expo-router';
+import { ModernHeader } from '@/components/ModernHeader';
 import { QuickLog } from './quick-log';
 import { DetailedClassify } from './detailed-classify';
 import { MorningCheck } from './morning-check';
@@ -16,191 +13,127 @@ import { SleepLog } from './sleep-log';
 type LogType = 'quick' | 'detailed' | 'morning' | 'sleep';
 
 interface LoggingHubProps {
-    navigation?: {
-        goBack: () => void;
-        navigate: (route: string) => void;
-    };
+    navigation?: { goBack: () => void; navigate: (route: string) => void; };
 }
 
-export const LoggingHub: React.FC<LoggingHubProps> = ({ navigation }) => {
-    const { darkMode } = useTheme();
-    const [activeTab, setActiveTab] = useState<LogType>('quick');
+const TABS = [
+    { id: 'quick'    as LogType, label: 'Quick Log',  icon: 'flash',    },
+    { id: 'detailed' as LogType, label: 'Classify',   icon: 'analytics' },
+    { id: 'morning'  as LogType, label: 'Daily Risk', icon: 'sunny'     },
+    { id: 'sleep'    as LogType, label: 'Sleep',      icon: 'moon'      },
+] as const;
 
-    const tabs = [
-        {
-            id: 'quick',
-            label: 'Quick Log',
-            icon: 'flash',
-            description: 'Log migraine during episode',
-        },
-        {
-            id: 'detailed',
-            label: 'Classify',
-            icon: 'list',
-            description: 'Detailed symptom analysis',
-        },
-        {
-            id: 'morning',
-            label: 'Daily Risk',
-            icon: 'sunny',
-            description: 'Morning trigger check',
-        },
-        {
-            id: 'sleep',
-            label: 'Sleep',
-            icon: 'moon',
-            description: 'Sleep quality assessment',
-        },
-    ] as const;
+export const LoggingHub: React.FC<LoggingHubProps> = ({ navigation }) => {
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<LogType>('quick');
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'quick':
-                return <QuickLog />;
-            case 'detailed':
-                return <DetailedClassify />;
-            case 'morning':
-                return <MorningCheck />;
-            case 'sleep':
-                return <SleepLog />;
-            default:
-                return <QuickLog />;
+            case 'quick':    return <QuickLog />;
+            case 'detailed': return <DetailedClassify />;
+            case 'morning':  return <MorningCheck />;
+            case 'sleep':    return <SleepLog />;
+            default:         return <QuickLog />;
         }
     };
 
     return (
-        <View
-            style={[
-                styles.container,
-                darkMode ? styles.containerDark : styles.containerLight,
-            ]}
-        >
-            {/* Tab Bar */}
-            <View
-                style={[
-                    styles.tabBar,
-                    darkMode ? styles.tabBarDark : styles.tabBarLight,
-                ]}
-            >
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.tabContent}
-                >
-                    {tabs.map((tab) => (
-                        <Pressable
-                            key={tab.id}
-                            onPress={() => setActiveTab(tab.id as LogType)}
-                            style={[
-                                styles.tab,
-                                activeTab === tab.id &&
-                                (darkMode ? styles.tabActiveDark : styles.tabActive),
-                            ]}
-                        >
-                            <Ionicons
-                                name={tab.icon as any}
-                                size={24}
-                                color={
-                                    activeTab === tab.id
-                                        ? '#10b981'
-                                        : darkMode
-                                            ? '#a8d5c4'
-                                            : '#7a9f94'
-                                }
-                                style={{ marginBottom: 4 }}
-                            />
-                            <Text
-                                style={[
-                                    styles.tabLabel,
-                                    activeTab === tab.id
-                                        ? darkMode
-                                            ? styles.tabLabelActiveDark
-                                            : styles.tabLabelActive
-                                        : darkMode
-                                            ? { color: '#a8d5c4' }
-                                            : { color: '#7a9f94' },
-                                ]}
-                                numberOfLines={1}
-                            >
-                                {tab.label}
-                            </Text>
-                        </Pressable>
-                    ))}
-                </ScrollView>
-            </View>
-
-            {/* Indicator Line */}
-            <View
-                style={[
-                    styles.indicatorLine,
-                    darkMode ? { backgroundColor: '#10b981', opacity: 0.8 } : { backgroundColor: '#10b981' },
-                ]}
+        <View style={s.container}>
+            <ModernHeader
+                title="Logging"
+                onBack={() => { if (navigation) navigation.goBack(); else router.back(); }}
             />
 
-            {/* Content */}
-            <View style={styles.contentContainer}>{renderContent()}</View>
+            {/* ── Tab bar ── */}
+            <View style={s.tabBarWrap}>
+                <View style={s.tabTrack}>
+                    {TABS.map(tab => {
+                        const active = activeTab === tab.id;
+                        return (
+                            <Pressable
+                                key={tab.id}
+                                onPress={() => setActiveTab(tab.id)}
+                                style={({ pressed }) => [
+                                    s.tab,
+                                    active && s.tabActive,
+                                    pressed && !active && s.tabPressed,
+                                ]}
+                            >
+                                <Ionicons
+                                    name={tab.icon as any}
+                                    size={16}
+                                    color={active ? '#fff' : '#6b21a8'}
+                                />
+                                <Text style={[s.tabLabel, active && s.tabLabelActive]}>
+                                    {tab.label}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </View>
+            </View>
+
+            <View style={s.content}>
+                {renderContent()}
+            </View>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#000',
     },
-    containerLight: {
-        backgroundColor: '#f5f8f7',
-    },
-    containerDark: {
-        backgroundColor: '#1a2522',
-    },
-    tabBar: {
+
+    tabBarWrap: {
+        backgroundColor: '#0d0618',
+        paddingHorizontal: 16,
         paddingVertical: 12,
-        paddingHorizontal: 8,
         borderBottomWidth: 1,
+        borderBottomColor: '#1a0b2e',
     },
-    tabBarLight: {
-        backgroundColor: '#fff',
-        borderBottomColor: '#d4e8e0',
+
+    // The pill track background
+    tabTrack: {
+        flexDirection: 'row',
+        backgroundColor: '#1a0b2e',
+        borderRadius: 14,
+        padding: 4,
+        gap: 2,
     },
-    tabBarDark: {
-        backgroundColor: '#253029',
-        borderBottomColor: '#5a8f7f',
-    },
-    tabContent: {
-        paddingHorizontal: 8,
-        gap: 8,
-    },
+
     tab: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 12,
+        flex: 1,
+        flexDirection: 'row',
         alignItems: 'center',
-        minWidth: 70,
+        justifyContent: 'center',
+        gap: 5,
+        paddingVertical: 10,
+        borderRadius: 11,
     },
     tabActive: {
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        backgroundColor: '#6107c9',
+        shadowColor: '#6107c9',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+        elevation: 6,
     },
-    tabActiveDark: {
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    tabPressed: {
+        backgroundColor: 'rgba(97,7,201,0.15)',
     },
     tabLabel: {
-        fontSize: 11,
-        fontWeight: '500',
-        textAlign: 'center',
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#6b21a8',
     },
     tabLabelActive: {
-        color: '#10b981',
-        fontWeight: '600',
+        color: '#fff',
+        fontWeight: '700',
     },
-    tabLabelActiveDark: {
-        color: '#10b981',
-        fontWeight: '600',
-    },
-    indicatorLine: {
-        height: 2,
-        backgroundColor: '#10b981',
-    },
-    contentContainer: {
+
+    content: {
         flex: 1,
     },
 });
