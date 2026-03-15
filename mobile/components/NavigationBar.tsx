@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,7 +24,6 @@ export function NavigationBar({
   userButtonPosition = 'right',
 }: NavigationBarProps) {
   const router = useRouter();
-  const { darkMode, toggleDarkMode } = useTheme();
   const { userData, clearUserData } = useUser();
   const insets = useSafeAreaInsets();
   const [showUserProfile, setShowUserProfile] = useState(false);
@@ -45,7 +43,7 @@ export function NavigationBar({
 
   return (
     <>
-      <View style={[styles.header, darkMode && styles.headerDark, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={[styles.headerContent, { maxWidth }]}>
           <View style={styles.headerTop}>
             {userButtonPosition === 'left' ? (
@@ -55,13 +53,12 @@ export function NavigationBar({
                   onPress={() => setShowUserProfile(true)}
                   style={({ pressed }) => [
                     styles.userButton,
-                    darkMode && styles.userButtonDark,
                     pressed && styles.userButtonPressed,
                   ]}
                 >
-                  <Ionicons name="person-circle" size={20} color={darkMode ? '#a8d5c4' : '#2d4a42'} />
+                  <Ionicons name="person-circle" size={20} color="#2d4a42" />
                   {userData?.name && (
-                    <Text style={[styles.userButtonText, darkMode && styles.textDark]} numberOfLines={1}>
+                    <Text style={styles.userButtonText} numberOfLines={1}>
                       {userData.name.split(' ')[0]}
                     </Text>
                   )}
@@ -75,12 +72,11 @@ export function NavigationBar({
                     onPress={handleBackPress}
                     style={({ pressed }) => [
                       styles.backButton,
-                      darkMode && styles.backButtonDark,
                       pressed && styles.backButtonPressed,
                     ]}
                   >
-                    <Ionicons name="arrow-back" size={20} color={darkMode ? '#e2e8f0' : '#1e293b'} />
-                    <Text style={[styles.backText, darkMode && styles.textDark]}>Back</Text>
+                    <Ionicons name="arrow-back" size={20} color="#1e293b" />
+                    <Text style={styles.backText}>Back</Text>
                   </Pressable>
                 ) : (
                   <View style={styles.placeholder} />
@@ -94,44 +90,25 @@ export function NavigationBar({
                   onPress={() => setShowUserProfile(true)}
                   style={({ pressed }) => [
                     styles.userButton,
-                    darkMode && styles.userButtonDark,
                     pressed && styles.userButtonPressed,
                   ]}
                 >
-                  <Ionicons name="person-circle" size={20} color={darkMode ? '#a8d5c4' : '#2d4a42'} />
+                  <Ionicons name="person-circle" size={20} color="#2d4a42" />
                   {userData?.name && (
-                    <Text style={[styles.userButtonText, darkMode && styles.textDark]} numberOfLines={1}>
+                    <Text style={styles.userButtonText} numberOfLines={1}>
                       {userData.name.split(' ')[0]}
                     </Text>
                   )}
                 </Pressable>
               )}
-
-              <Pressable
-                onPress={toggleDarkMode}
-                style={({ pressed }) => [
-                  styles.darkModeButton,
-                  darkMode && styles.darkModeButtonDark,
-                  pressed && styles.darkModeButtonPressed,
-                ]}
-              >
-                <Ionicons
-                  name={darkMode ? 'sunny' : 'moon'}
-                  size={20}
-                  color={darkMode ? '#fbbf24' : '#475569'}
-                />
-                <Text style={[styles.darkModeText, darkMode && styles.textDark]}>
-                  {darkMode ? 'Light' : 'Dark'}
-                </Text>
-              </Pressable>
             </View>
           </View>
 
           {title && (
             <>
-              <Text style={[styles.headerTitle, darkMode && styles.textDark]}>{title}</Text>
+              <Text style={styles.headerTitle}>{title}</Text>
               {subtitle && (
-                <Text style={[styles.headerSubtitle, darkMode && styles.headerSubtitleDark]}>{subtitle}</Text>
+                <Text style={styles.headerSubtitle}>{subtitle}</Text>
               )}
             </>
           )}
@@ -146,42 +123,42 @@ export function NavigationBar({
         onRequestClose={() => setShowUserProfile(false)}
       >
         <Pressable
-          style={[styles.modalOverlay, { backgroundColor: darkMode ? 'rgba(26, 38, 34, 0.8)' : 'rgba(0, 0, 0, 0.3)' }]}
+          style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}
           onPress={() => setShowUserProfile(false)}
         >
-          <View style={[styles.userProfileCard, darkMode && styles.userProfileCardDark]}>
+          <View style={styles.userProfileCard}>
             <View style={styles.profileHeader}>
-              <Ionicons name="person-circle" size={60} color={darkMode ? '#a8d5c4' : '#2d4a42'} />
+              <Ionicons name="person-circle" size={60} color="#2d4a42" />
               <Pressable
                 onPress={() => setShowUserProfile(false)}
                 style={({ pressed }) => [styles.closeButton, pressed && styles.closeButtonPressed]}
               >
-                <Ionicons name="close" size={24} color={darkMode ? '#d4e8e0' : '#2d4a42'} />
+                <Ionicons name="close" size={24} color="#2d4a42" />
               </Pressable>
             </View>
 
             <View style={styles.profileContent}>
-              <Text style={[styles.profileName, darkMode && styles.profileNameDark]}>
+              <Text style={styles.profileName}>
                 {userData?.name || 'User'}
               </Text>
 
-              <View style={[styles.profileInfoSection, darkMode && styles.profileInfoSectionDark]}>
-                <Text style={[styles.profileLabel, darkMode && styles.profileLabelDark]}>Gender</Text>
-                <Text style={[styles.profileValue, darkMode && styles.profileValueDark]}>
+              <View style={styles.profileInfoSection}>
+                <Text style={styles.profileLabel}>Gender</Text>
+                <Text style={styles.profileValue}>
                   {userData?.gender || 'Not set'}
                 </Text>
               </View>
 
-              <View style={[styles.profileInfoSection, darkMode && styles.profileInfoSectionDark]}>
-                <Text style={[styles.profileLabel, darkMode && styles.profileLabelDark]}>Age Bracket</Text>
-                <Text style={[styles.profileValue, darkMode && styles.profileValueDark]}>
+              <View style={styles.profileInfoSection}>
+                <Text style={styles.profileLabel}>Age Bracket</Text>
+                <Text style={styles.profileValue}>
                   {userData?.ageBracket || 'Not set'}
                 </Text>
               </View>
 
-              <View style={[styles.profileInfoSection, darkMode && styles.profileInfoSectionDark]}>
-                <Text style={[styles.profileLabel, darkMode && styles.profileLabelDark]}>Integrations</Text>
-                <Text style={[styles.profileValue, darkMode && styles.profileValueDark]}>
+              <View style={styles.profileInfoSection}>
+                <Text style={styles.profileLabel}>Integrations</Text>
+                <Text style={styles.profileValue}>
                   {userData?.integrations && userData.integrations.length > 0
                     ? userData.integrations.join(', ')
                     : 'None'}

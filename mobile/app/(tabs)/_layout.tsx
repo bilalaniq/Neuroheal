@@ -1,31 +1,20 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Stack } from 'expo-router';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { UserProvider } from '@/contexts/UserContext';
 
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function RootLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarStyle: { display: 'none' },
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-        }}
-      />
-      <Tabs.Screen
-        name="pattern-warnings"
-        options={{
-          title: 'Pattern Warnings',
-        }}
-      />
-    </Tabs>
+    <ThemeProvider>
+      <UserProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />        {/* splash + login */}
+          <Stack.Screen name="(tabs)" />        {/* your HomeScreen */}
+          <Stack.Screen name="ai-chat" />
+          <Stack.Screen name="patterns" />
+          <Stack.Screen name="emergency" />
+          <Stack.Screen name="weather-forecast" />
+        </Stack>
+      </UserProvider>
+    </ThemeProvider>
   );
 }

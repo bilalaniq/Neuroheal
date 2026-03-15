@@ -29,8 +29,7 @@ interface MigraineCalendarProps {
 export function MigraineCalendar({ migraineDays, darkMode }: MigraineCalendarProps) {
     const router = useRouter();
     const [currentDate, setCurrentDate] = useState(new Date());
-    const { darkMode: themeDarkMode } = useTheme();
-    const isDarkMode = darkMode ?? themeDarkMode;
+    const isDarkMode = darkMode ?? true;
 
     // Get calendar days for current month
     const calendarDays = useMemo(() => {
@@ -224,33 +223,35 @@ export function MigraineCalendar({ migraineDays, darkMode }: MigraineCalendarPro
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
-        padding: 16,
+        backgroundColor: '#0b0f17',
+        borderRadius: 16,
+        padding: 14,
         marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#383454',
     },
     containerDark: {
-        backgroundColor: '#1f2937',
+        backgroundColor: '#0b0f17',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
-        paddingBottom: 12,
+        marginBottom: 12,
+        paddingBottom: 8,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: '#2d3750',
     },
     headerDark: {
-        borderBottomColor: '#374151',
+        borderBottomColor: '#2d3750',
     },
     monthTitle: {
         fontSize: 18,
-        fontWeight: '600',
-        color: '#111827',
+        fontWeight: '700',
+        color: '#f8fbff',
     },
     monthTitleDark: {
-        color: '#f3f4f6',
+        color: '#f8fbff',
     },
     navButton: {
         padding: 8,
@@ -258,19 +259,22 @@ const styles = StyleSheet.create({
     weekDaysContainer: {
         flexDirection: 'row',
         marginBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#22304d',
+        paddingBottom: 6,
     },
     weekDayCell: {
         flex: 1,
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 6,
     },
     weekDayText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#6b7280',
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#c9d2e1',
     },
     weekDayTextDark: {
-        color: '#9ca3af',
+        color: '#c9d2e1',
     },
     calendarGrid: {
         flexDirection: 'row',
@@ -283,7 +287,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 4,
     },
-    dayCellDark: {},
+    dayCellDark: { backgroundColor: '#111827', borderRadius: 6 },
     emptyCell: {
         backgroundColor: 'transparent',
     },

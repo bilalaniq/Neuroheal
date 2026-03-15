@@ -3,14 +3,12 @@ import { OnboardingScreen } from '@/components/OnboardingScreen';
 import { PatternWarnings } from '@/components/PatternWarnings';
 import { MigraineCalendar } from '@/components/MigraineCalendar';
 import { QuickLog } from '@/components/quick-log';
-import { MigraineReportChart } from '@/components/MigraineReportChart';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { useRealtimeMonitoring } from '@/hooks/useRealtimeMonitoring';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator, Image } from 'react-native';
 import FloatingMenu from './menu';
 
 const { width } = Dimensions.get('window');
@@ -23,7 +21,7 @@ const BACKEND_URL = 'http://192.168.37.37:8080';
 // const BACKEND_URL = 'http://192.168.1.X:8080'; // Real device
 
 export default function HomeScreen() {
-  const { darkMode } = useTheme();
+  const darkMode = false;
   const { userData } = useUser();
   const router = useRouter();
   const realtime = useRealtimeMonitoring(0, { trackSteps: false });
@@ -172,41 +170,74 @@ export default function HomeScreen() {
             <Text style={[styles.subtitle, darkMode && styles.subtitleDark]}>How are we feeling today?</Text>
           </View>
 
-          
+
 
           {/* AI Chat Card */}
-          <Pressable
-            onPress={() => router.push('/ai-chat')}
-            style={({ pressed }) => [styles.aiChatCard, darkMode && styles.aiChatCardDark, pressed && styles.aiChatCardPressed]}
-          >
-            <View style={styles.aiChatHeader}>
-              <View style={[styles.aiChatIcon, darkMode && styles.aiChatIconDark]}>
-                <Ionicons name="sparkles" size={24} color="#10b981" />
-              </View>
-              <View style={styles.aiChatInfo}>
-                <Text style={[styles.aiChatTitle, darkMode && styles.aiChatTitleDark]}>NeuroRecord AI</Text>
-                <Text style={[styles.aiChatSubtitle, darkMode && styles.aiChatSubtitleDark]}>Your health assistant</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={darkMode ? '#a8d5c4' : '#7a9f94'} />
+
+
+          {/* Horizontal quick tools: AI + Log Migraine */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickToolsRow} contentContainerStyle={styles.quickToolsRowContent}>
+            <Pressable
+              onPress={() => router.push('/ai-chat')}
+              style={({ pressed }) => [styles.quickToolCard, pressed && styles.quickToolCardPressed]}
+            >
+              <Ionicons name="sparkles" size={22} color="#f9f5ff" style={{ marginBottom: 8 }} />
+              <Text style={styles.quickToolTitle}>AI Chat</Text>
+              <Text style={styles.quickToolSubtitle}>Ask questions and get insights</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/logging')}
+              style={({ pressed }) => [styles.quickToolCard, pressed && styles.quickToolCardPressed]}
+            >
+              <Ionicons name="document-text" size={22} color="#f9f5ff" style={{ marginBottom: 8 }} />
+              <Text style={styles.quickToolTitle}>Log Migraine</Text>
+              <Text style={styles.quickToolSubtitle}>Record your headache details</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/neuro-record')}
+              style={({ pressed }) => [styles.quickToolCard, pressed && styles.quickToolCardPressed]}
+            >
+              <Ionicons name="bar-chart" size={22} color="#f9f5ff" style={{ marginBottom: 8 }} />
+              <Text style={styles.quickToolTitle}>Neuro Record</Text>
+              <Text style={styles.quickToolSubtitle}>Open migraine report & calendar</Text>
+            </Pressable>
+
+
+            <Pressable onPress={() => router.push('/emergency')} style={[styles.emergencyVerticalCard, darkMode && styles.emergencyVerticalCardDark]}>
+              <Ionicons name="medical" size={28} color="#f87171" />
+              <Text style={[styles.emergencyVerticalTitle, darkMode && styles.emergencyVerticalTitleDark]}>SOS Emergency</Text>
+              <Text style={[styles.emergencyVerticalHint, darkMode && styles.emergencyVerticalHintDark]}>Rapid access for serious symptoms</Text>
+            </Pressable>
+
+          </ScrollView>
+
+          {/* High confidence patterns + SOS slider */}
+          <View style={styles.patternSliderSection}>
+            <View style={styles.patternSliderHeader}>
+              <Text style={[styles.patternsHeading, darkMode && styles.patternsHeadingDark]}>High confidence patterns</Text>
+              <Pressable onPress={handleViewPatterns}>
+                <Text style={[styles.viewAllPatterns, darkMode && styles.viewAllPatternsDark]}>View all patterns</Text>
+              </Pressable>
             </View>
-            <Text style={[styles.aiChatDescription, darkMode && styles.aiChatDescriptionDark]}>
-              Ask about your migraines, get insights, and track your health journey
-            </Text>
-          </Pressable>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.patternSliderScroll}>
+              <View style={[styles.patternCard, darkMode && styles.patternCardDark]}>
+                <Text style={[styles.patternTitle, darkMode && styles.patternTitleDark]}>Poor Sleep</Text>
+                <Text style={[styles.patternSubtitle, darkMode && styles.patternSubtitleDark]}>Poor sleep is a frequent trigger</Text>
+                <Text style={styles.patternConfidence}>93%</Text>
+              </View>
+              <View style={[styles.patternCard, darkMode && styles.patternCardDark]}>
+                <Text style={[styles.patternTitle, darkMode && styles.patternTitleDark]}>Stress</Text>
+                <Text style={[styles.patternSubtitle, darkMode && styles.patternSubtitleDark]}>Stress is a common migraine trigger</Text>
+                <Text style={styles.patternConfidence}>93%</Text>
+              </View>
+              <View style={[styles.patternCard, darkMode && styles.patternCardDark]}>
+                <Text style={[styles.patternTitle, darkMode && styles.patternTitleDark]}>+1 more pattern</Text>
+                <Text style={[styles.patternSubtitle, darkMode && styles.patternSubtitleDark]}>More triggers detected</Text>
+                <Text style={styles.patternConfidence}>High</Text>
+              </View>
 
-          {/* Pattern Warnings */}
-          <PatternWarnings onPress={handleViewPatterns} maxItems={2} style={styles.warningsContainer} />
-
-          {/* Emergency Button */}
-          <Pressable
-            onPress={() => router.push('/emergency')}
-            style={({ pressed }) => [styles.emergencyButton, darkMode && styles.emergencyButtonDark, pressed && styles.emergencyButtonPressed]}
-          >
-            <Ionicons name="medical" size={40} color="#dc2626" style={styles.emergencyIcon} />
-            <Text style={[styles.emergencyText, darkMode && styles.emergencyTextDark]}>SOS Emergency</Text>
-          </Pressable>
-          
-
+            </ScrollView>
+          </View>
 
           {/* Dashboard Heading + Refresh */}
           <View style={styles.dashboardHeadingRow}>
@@ -335,10 +366,7 @@ export default function HomeScreen() {
           </View>
 
           {/* Migraine Calendar */}
-          <MigraineCalendar migraineDays={migraineDays} darkMode={darkMode} />
-
-          {/* Migraine Report Chart */}
-          <MigraineReportChart migraineDays={migraineDays} />
+          <MigraineCalendar migraineDays={migraineDays} darkMode={true} />
 
         </View>
       </ScrollView>
@@ -353,37 +381,37 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f8f7' },
-  containerDark: { backgroundColor: '#1a2622' },
+  container: { flex: 1, backgroundColor: '#000' },
+  containerDark: { backgroundColor: '#000' },
   scrollView: { flex: 1 },
   contentContainer: { padding: 24, paddingTop: 12 },
   content: { width: '100%', alignSelf: 'center' },
   header: { alignItems: 'center', marginBottom: 20, marginTop: 0 },
-  title: { fontSize: 28, fontWeight: '700', color: '#2d4a42', marginBottom: 4 },
-  titleDark: { color: '#d4e8e0' },
-  subtitle: { fontSize: 16, color: '#7a9f94' },
-  subtitleDark: { color: '#7a9f94' },
-  emergencyButton: { width: '100%', backgroundColor: '#f0f5f3', borderWidth: 1, borderColor: '#d4e8e0', borderRadius: 20, padding: 16, alignItems: 'center', marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 3 },
-  emergencyButtonDark: { backgroundColor: '#253029', borderColor: '#5a8f7f' },
+  title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 4 },
+  titleDark: { color: '#fff' },
+  subtitle: { fontSize: 16, color: '#d4d4d4' },
+  subtitleDark: { color: '#d4d4d4' },
+  emergencyButton: { width: '100%', backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: '#444', borderRadius: 20, padding: 16, alignItems: 'center', marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 3 },
+  emergencyButtonDark: { backgroundColor: '#1a1a1a', borderColor: '#444' },
   emergencyButtonPressed: { transform: [{ scale: 0.98 }], opacity: 0.85 },
   emergencyIcon: { marginBottom: 4 },
-  emergencyText: { fontSize: 20, fontWeight: '600', color: '#d4a0a0', marginBottom: 4 },
-  emergencyTextDark: { color: '#d4a0a0' },
+  emergencyText: { fontSize: 20, fontWeight: '600', color: '#ffb3e6', marginBottom: 4 },
+  emergencyTextDark: { color: '#ffb3e6' },
   emergencySubtext: { fontSize: 14, color: '#7a6363', textAlign: 'center', paddingHorizontal: 16 },
   emergencySubtextDark: { color: '#d4a0a0' },
-  aiChatCard: { width: '100%', backgroundColor: '#f0f5f3', borderWidth: 1, borderColor: '#d4e8e0', borderRadius: 20, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
-  aiChatCardDark: { backgroundColor: '#253029', borderColor: '#5a8f7f' },
-  aiChatCardPressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
+  aiChatCard: { width: '100%', backgroundColor: '#4c1d95', borderWidth: 1, borderColor: '#7c3aed', borderRadius: 20, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 2 },
+  aiChatCardDark: { backgroundColor: '#4c1d95', borderColor: '#7c3aed' },
+  aiChatCardPressed: { opacity: 0.95, transform: [{ scale: 0.99 }] },
   aiChatHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  aiChatIcon: { width: 48, height: 48, backgroundColor: '#d4e8e0', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  aiChatIconDark: { backgroundColor: '#3f5451' },
+  aiChatIcon: { width: 48, height: 48, backgroundColor: '#8b5cf6', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  aiChatIconDark: { backgroundColor: '#8b5cf6' },
   aiChatInfo: { flex: 1 },
-  aiChatTitle: { fontSize: 16, fontWeight: '600', color: '#2d4a42', marginBottom: 2 },
-  aiChatTitleDark: { color: '#d4e8e0' },
-  aiChatSubtitle: { fontSize: 12, color: '#7a9f94' },
+  aiChatTitle: { fontSize: 16, fontWeight: '600', color: '#fff', marginBottom: 2 },
+  aiChatTitleDark: { color: '#fff' },
+  aiChatSubtitle: { fontSize: 12, color: '#c4b5fd' },
   aiChatSubtitleDark: { color: '#7a9f94' },
-  aiChatDescription: { fontSize: 13, color: '#5a8f7f', lineHeight: 18 },
-  aiChatDescriptionDark: { color: '#5a8f7f' },
+  aiChatDescription: { fontSize: 13, color: '#f3e8ff', lineHeight: 18 },
+  aiChatDescriptionDark: { color: '#f3e8ff' },
   warningsContainer: { marginBottom: 16 },
   dashboardHeadingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 24, marginBottom: 16 },
   dashboardHeading: { fontSize: 20, fontWeight: '700', color: '#2d4a42', flex: 1 },
@@ -392,15 +420,53 @@ const styles = StyleSheet.create({
   errorBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', borderRadius: 8, padding: 8, marginBottom: 12 },
   errorBannerDark: { backgroundColor: '#3a2e1a' },
   errorText: { fontSize: 12, color: '#d97706' },
-  dashboardGrid: { gap: 12, marginBottom: 24 },
-  dashboardCard: { backgroundColor: '#f0f5f3', borderWidth: 1, borderColor: '#d4e8e0', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
-  dashboardCardDark: { backgroundColor: '#253029', borderColor: '#5a8f7f' },
+  dashboardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginBottom: 24 },
+  dashboardCard: { width: '48%', backgroundColor: '#111', borderWidth: 1, borderColor: '#444', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3, elevation: 2 },
+  dashboardCardDark: { backgroundColor: '#111', borderColor: '#444' },
   weatherCardPressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 },
-  cardTitle: { fontSize: 12, fontWeight: '600', color: '#2d4a42', textTransform: 'uppercase', letterSpacing: 0.5 },
-  cardTitleDark: { color: '#95d5b2' },
-  cardValue: { fontSize: 24, fontWeight: '700', color: '#2d4a42', marginBottom: 4 },
-  cardValueDark: { color: '#d4e8e0' },
-  cardLabel: { fontSize: 12, color: '#7a9f94' },
-  cardLabelDark: { color: '#95d5b2' },
+  dashboardCardSmall: { width: '48%' },
+  cardTitle: { fontSize: 12, fontWeight: '600', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 },
+  cardTitleDark: { color: '#fff' },
+  cardValue: { fontSize: 24, fontWeight: '700', color: '#fff', marginBottom: 4 },
+  cardValueDark: { color: '#fff' },
+  cardLabel: { fontSize: 12, color: '#c4b5fd' },
+  cardLabelDark: { color: '#c4b5fd' },
+  neuroRecordCard: { width: '100%', backgroundColor: '#111', borderWidth: 1, borderColor: '#444', borderRadius: 16, padding: 14, marginTop: 14, marginBottom: 20 },
+  neuroRecordCardDark: { backgroundColor: '#111', borderColor: '#444' },
+  neuroRecordCardPressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
+  neuroRecordRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  neuroRecordIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#7c3aed', justifyContent: 'center', alignItems: 'center' },
+  neuroRecordIconDark: { backgroundColor: '#7c3aed' },
+  neuroRecordTextWrap: { flex: 1 },
+  neuroRecordTitle: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  neuroRecordTitleDark: { color: '#fff' },
+  neuroRecordSubtitle: { fontSize: 12, color: '#c4b5fd' },
+  neuroRecordSubtitleDark: { color: '#c4b5fd' },
+  quickToolsRow: { marginTop: 12, marginBottom: 14, width: '100%' },
+  quickToolsRowContent: { paddingBottom: 4, gap: 12, alignItems: 'stretch' },
+  quickToolCard: { width: 210, minHeight: 140, backgroundColor: '#4c1d95', borderRadius: 16, borderWidth: 1, borderColor: '#7c3aed', padding: 14, marginRight: 8, justifyContent: 'center' },
+  quickToolCardPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
+  quickToolTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 2 },
+  quickToolSubtitle: { color: '#e9d8ff', fontSize: 12, lineHeight: 16 },
+  patternSliderSection: { marginTop: 16, marginBottom: 16 },
+  patternSliderHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  patternsHeading: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  patternsHeadingDark: { color: '#fff' },
+  viewAllPatterns: { fontSize: 12, color: '#9f7aea', fontWeight: '600' },
+  viewAllPatternsDark: { color: '#d8b4fe' },
+  patternSliderScroll: { flexDirection: 'row' },
+  patternCard: { width: 180, backgroundColor: '#4c1d95', borderRadius: 16, borderWidth: 1, borderColor: '#7c3aed', padding: 12, marginRight: 12 },
+  patternCardDark: { backgroundColor: '#4c1d95', borderColor: '#7c3aed' },
+  patternTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  patternTitleDark: { color: '#fff' },
+  patternSubtitle: { color: '#f3e8ff', fontSize: 12, marginBottom: 8 },
+  patternSubtitleDark: { color: '#f3e8ff' },
+  patternConfidence: { color: '#f3e8ff', fontWeight: '700', fontSize: 16 },
+  emergencyVerticalCard: { width: 160, backgroundColor: '#4c1d95', borderRadius: 16, borderWidth: 1, borderColor: '#7c3aed', padding: 12, marginRight: 12, justifyContent: 'flex-start', alignItems: 'flex-start' },
+  emergencyVerticalCardDark: { backgroundColor: '#4c1d95', borderColor: '#7c3aed' },
+  emergencyVerticalTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginTop: 8 },
+  emergencyVerticalTitleDark: { color: '#fff' },
+  emergencyVerticalHint: { color: '#c4b5fd', fontSize: 12, marginTop: 4 },
+  emergencyVerticalHintDark: { color: '#c4b5fd' },
 });

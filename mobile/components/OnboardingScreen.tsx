@@ -1,7 +1,7 @@
 import { useUser } from '@/contexts/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Dimensions, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 
 interface OnboardingScreenProps {
   onComplete: () => void;
@@ -185,108 +185,114 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   // Welcome Step
   if (step === 1) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.step1Container} scrollEnabled={false}>
-        <View style={[styles.step1Content, { maxWidth }]}>
-          {/* Logo/Header */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <Ionicons name="pulse" size={40} color="#fff" />
-            </View>
-            <Text style={styles.title}>Welcome to MyGraine</Text>
-            <Text style={styles.subtitle}>
-              Your personal companion for migraine prevention and management
-            </Text>
-          </View>
-
-          {/* Personal Info Form */}
-          <View style={styles.formSection}>
-            <View style={styles.formCard}>
-              <Text style={styles.label}>What should I call you?</Text>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter your name"
-                placeholderTextColor="#94a3b8"
-                style={styles.input}
-              />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <View style={styles.bgCircle1} />
+        <View style={styles.bgCircle2} />
+        <View style={styles.bgCircle3} />
+        <ScrollView style={styles.step1ScrollView} contentContainerStyle={styles.step1Container} scrollEnabled={false}>
+          <View style={[styles.step1Content, { maxWidth }]}>
+            {/* Logo/Header */}
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <Ionicons name="pulse" size={40} color="#fff" />
+              </View>
+              <Text style={styles.title}>Welcome to MyGraine</Text>
+              <Text style={styles.subtitle}>
+                Your personal companion for migraine prevention and management
+              </Text>
             </View>
 
-            <View style={styles.formCard}>
-              <Text style={styles.label}>Gender</Text>
-              <View style={styles.genderContainer}>
-                {['Female', 'Male', 'Other'].map((genderOption) => (
-                  <Pressable
-                    key={genderOption}
-                    onPress={() => setGender(genderOption)}
-                    style={[
-                      styles.genderButton,
-                      gender === genderOption && styles.genderButtonSelected,
-                    ]}
-                  >
-                    <Text
+            {/* Personal Info Form */}
+            <View style={styles.formSection}>
+              <View style={styles.formCard}>
+                <Text style={styles.label}>What should I call you?</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter your name"
+                  placeholderTextColor="#94a3b8"
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.formCard}>
+                <Text style={styles.label}>Gender</Text>
+                <View style={styles.genderContainer}>
+                  {['Female', 'Male', 'Other'].map((genderOption) => (
+                    <Pressable
+                      key={genderOption}
+                      onPress={() => setGender(genderOption)}
                       style={[
-                        styles.genderText,
-                        gender === genderOption && styles.genderTextSelected,
+                        styles.genderButton,
+                        gender === genderOption && styles.genderButtonSelected,
                       ]}
                     >
-                      {genderOption}
-                    </Text>
-                  </Pressable>
-                ))}
+                      <Text
+                        style={[
+                          styles.genderText,
+                          gender === genderOption && styles.genderTextSelected,
+                        ]}
+                      >
+                        {genderOption}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.formCard}>
+                <Text style={styles.label}>Age bracket</Text>
+                <View style={styles.ageBracketGrid}>
+                  {ageBrackets.map((bracket) => (
+                    <Pressable
+                      key={bracket.id}
+                      onPress={() => setAgeBracket(bracket.id)}
+                      style={[
+                        styles.ageBracketButton,
+                        ageBracket === bracket.value.toString() && styles.ageBracketButtonSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.ageBracketText,
+                          ageBracket === bracket.id && styles.ageBracketTextSelected,
+                        ]}
+                      >
+                        {bracket.id}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
             </View>
 
-            <View style={styles.formCard}>
-              <Text style={styles.label}>Age bracket</Text>
-              <View style={styles.ageBracketGrid}>
-                {ageBrackets.map((bracket) => (
-                  <Pressable
-                    key={bracket.id}
-                    onPress={() => setAgeBracket(bracket.id)}
-                    style={[
-                      styles.ageBracketButton,
-                      ageBracket === bracket.value.toString() && styles.ageBracketButtonSelected,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.ageBracketText,
-                        ageBracket === bracket.id && styles.ageBracketTextSelected,
-                      ]}
-                    >
-                      {bracket.id}
-                    </Text>
-                  </Pressable>
-                ))}
+            {/* Progress indicator */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressDots}>
+                <View style={[styles.progressDot, styles.progressDotActive]} />
+                <View style={styles.progressDot} />
+                <View style={styles.progressDot} />
               </View>
+              <Text style={styles.progressText}>Step 1 of 3</Text>
             </View>
-          </View>
 
-          {/* Progress indicator */}
-          <View style={styles.progressContainer}>
-            <View style={styles.progressDots}>
-              <View style={[styles.progressDot, styles.progressDotActive]} />
-              <View style={styles.progressDot} />
-              <View style={styles.progressDot} />
-            </View>
-            <Text style={styles.progressText}>Step 1 of 3</Text>
+            {/* Continue Button */}
+            <Pressable
+              onPress={() => setStep(2)}
+              disabled={!canProceedStep1}
+              style={({ pressed }) => [
+                styles.continueButton,
+                !canProceedStep1 && styles.continueButtonDisabled,
+                pressed && styles.continueButtonPressed,
+              ]}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+              <Ionicons name="arrow-forward" size={20} color="#fff" />
+            </Pressable>
           </View>
-
-          {/* Continue Button */}
-          <Pressable
-            onPress={() => setStep(2)}
-            disabled={!canProceedStep1}
-            style={({ pressed }) => [
-              styles.continueButton,
-              !canProceedStep1 && styles.continueButtonDisabled,
-              pressed && styles.continueButtonPressed,
-            ]}
-          >
-            <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
-          </Pressable>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     );
   }
 
@@ -298,6 +304,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
     return (
       <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <View style={styles.bgCircle1} />
+        <View style={styles.bgCircle2} />
+        <View style={styles.bgCircle3} />
         {/* Header */}
         <View style={[styles.step2HeaderContent, { maxWidth }]}>
           <Text style={styles.step2Title}>Connect Your Data</Text>
@@ -458,68 +468,109 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
   // Completion Step
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.step3Container}>
-      <View style={[styles.step3Content, { maxWidth }]}>
-        {/* Success Icon */}
-        <View style={styles.successIconContainer}>
-          <Ionicons name="checkmark" size={48} color="#fff" />
-        </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <View style={styles.bgCircle1} />
+      <View style={styles.bgCircle2} />
+      <View style={styles.bgCircle3} />
+      <ScrollView style={styles.step3ScrollView} contentContainerStyle={styles.step3Container}>
+        <View style={[styles.step3Content, { maxWidth }]}>        {/* Success Icon */}
+          <View style={styles.successIconContainer}>
+            <Ionicons name="checkmark" size={48} color="#fff" />
+          </View>
 
-        {/* Message */}
-        <Text style={styles.step3Title}>You're All Set, {name}!</Text>
-        <Text style={styles.step3Subtitle}>
-          MyGraine is now configured and ready to help you track and prevent migraines.
-        </Text>
+          {/* Message */}
+          <Text style={styles.step3Title}>You're All Set, {name}!</Text>
+          <Text style={styles.step3Subtitle}>
+            MyGraine is now configured and ready to help you track and prevent migraines.
+          </Text>
 
-        {/* Summary */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Age</Text>
-              <Text style={styles.summaryValue}>{ageBracket}</Text>
-            </View>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Data sources</Text>
-              <Text style={styles.summaryValue}>
-                {integrations.filter(i => i.enabled).length} active
-              </Text>
-            </View>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Status</Text>
-              <Text style={[styles.summaryValue, styles.summaryValueReady]}>Ready</Text>
+          {/* Summary */}
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryGrid}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Age</Text>
+                <Text style={styles.summaryValue}>{ageBracket}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Data sources</Text>
+                <Text style={styles.summaryValue}>
+                  {integrations.filter(i => i.enabled).length} active
+                </Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>Status</Text>
+                <Text style={[styles.summaryValue, styles.summaryValueReady]}>Ready</Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Progress indicator */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressDots}>
-            <View style={styles.progressDot} />
-            <View style={styles.progressDot} />
-            <View style={[styles.progressDot, styles.progressDotActive, styles.progressDotActiveEmerald]} />
+          {/* Progress indicator */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressDots}>
+              <View style={styles.progressDot} />
+              <View style={styles.progressDot} />
+              <View style={[styles.progressDot, styles.progressDotActive, styles.progressDotActiveEmerald]} />
+            </View>
+            <Text style={styles.progressText}>Step 3 of 3</Text>
           </View>
-          <Text style={styles.progressText}>Step 3 of 3</Text>
-        </View>
 
-        {/* Get Started Button */}
-        <Pressable
-          onPress={submitData}
-          style={({ pressed }) => [
-            styles.getStartedButton,
-            pressed && styles.getStartedButtonPressed,
-          ]}
-        >
-          <Text style={styles.getStartedButtonText}>Get Started</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+          {/* Get Started Button */}
+          <Pressable
+            onPress={submitData}
+            style={({ pressed }) => [
+              styles.getStartedButton,
+              pressed && styles.getStartedButtonPressed,
+            ]}
+          >
+            <Text style={styles.getStartedButtonText}>Get Started</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f8f7',
+    backgroundColor: '#1a0b2e',
+    overflow: 'hidden',
+  },
+  bgCircle1: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(159, 122, 234, 0.2)',
+    top: -80,
+    right: -100,
+  },
+  bgCircle2: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(128, 90, 213, 0.15)',
+    bottom: -40,
+    left: -70,
+  },
+  bgCircle3: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(107, 70, 193, 0.1)',
+    top: '35%',
+    left: '22%',
+  },
+  step1ScrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  step3ScrollView: {
+    flex: 1,
+    width: '100%',
   },
   // Step 1 styles
   step1Container: {
@@ -538,7 +589,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 80,
     height: 80,
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#7c3aed',
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
@@ -552,13 +603,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2d4a42',
+    color: '#fff',
     marginBottom: 12,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#5a8f7f',
+    color: 'rgba(255,255,255,0.85)',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -567,31 +618,31 @@ const styles = StyleSheet.create({
 
   },
   formCard: {
-    backgroundColor: '#f0f5f3',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 24,
-    padding: 20,
+    padding: 18,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
     borderWidth: 1,
-    borderColor: '#d4e8e0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   label: {
-    fontSize: 22,
-    color: '#2d4a42',
-    marginBottom: 12,
+    fontSize: 20,
+    color: '#fff',
+    marginBottom: 8,
   },
   input: {
     width: '100%',
     padding: 12,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#d4e8e0',
+    borderColor: 'rgba(255,255,255,0.2)',
     fontSize: 16,
-    color: '#2d4a42',
-    backgroundColor: '#f5f8f7',
+    color: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   ageBracketGrid: {
     flexDirection: 'row',
@@ -608,8 +659,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#d4e8e0',
-    backgroundColor: '#f0f5f3',
+    borderColor: '#c4b5fd',
+    backgroundColor: 'rgba(167,139,250,0.2)',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -618,8 +669,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   genderButtonSelected: {
-    borderColor: '#a8d5c4',
-    backgroundColor: '#d4e8e0',
+    borderColor: '#8b5cf6',
+    backgroundColor: '#d8b4fe',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
@@ -628,18 +679,12 @@ const styles = StyleSheet.create({
   },
   genderText: {
     fontSize: 16,
-    color: '#7a9f94',
+    color: '#f3e8ff',
     textAlign: 'center',
   },
   genderTextSelected: {
-    color: '#2d4a42',
+    color: '#fff',
     fontWeight: '700',
-  },
-  ageBracketGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-
   },
   ageBracketButton: {
     flex: 1,
@@ -647,8 +692,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#d4e8e0',
-    backgroundColor: '#f0f5f3',
+    borderColor: '#c4b5fd',
+    backgroundColor: 'rgba(167,139,250,0.2)',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -658,8 +703,8 @@ const styles = StyleSheet.create({
 
   },
   ageBracketButtonSelected: {
-    borderColor: '#a8d5c4',
-    backgroundColor: '#d4e8e0',
+    borderColor: '#8b5cf6',
+    backgroundColor: '#d8b4fe',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
@@ -668,12 +713,12 @@ const styles = StyleSheet.create({
   },
   ageBracketText: {
     fontSize: 20,
-    color: '#7a9f94',
+    color: '#f5f3ff',
     textAlign: 'center',
 
   },
   ageBracketTextSelected: {
-    color: '#2d4a42',
+    color: '#fff',
     fontWeight: '700',
   },
   progressContainer: {
@@ -693,27 +738,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#c4dbd2',
   },
   progressDotActive: {
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
   },
   progressDotActiveEmerald: {
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
   },
   progressText: {
     textAlign: 'center',
-    color: '#7a9f94',
+    color: '#f5f3ff',
     fontSize: 12,
     marginTop: 8,
   },
   continueButton: {
     width: '100%',
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
     borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#a8d5c4',
+    shadowColor: '#8b5cf6',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
@@ -741,12 +786,12 @@ const styles = StyleSheet.create({
   step2Title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#2d4a42',
+    color: '#fff',
     marginBottom: 8,
   },
   step2Subtitle: {
     fontSize: 14,
-    color: '#5a8f7f',
+    color: 'rgba(255,255,255,0.85)',
   },
   scrollView: {
     flex: 1,
@@ -758,6 +803,10 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     padding: 24,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   section: {
     marginBottom: 18,
@@ -765,7 +814,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2d4a42',
+    color: '#fff',
     marginBottom: 12,
   },
   integrationList: {
@@ -773,23 +822,23 @@ const styles = StyleSheet.create({
   },
   integrationCard: {
     width: '100%',
-    backgroundColor: '#f0f5f3',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
     borderWidth: 1,
-    borderColor: '#d4e8e0',
+    borderColor: 'rgba(255,255,255,0.15)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   integrationCardEnabledHealth: {
-    borderColor: '#a8d5c4',
-    backgroundColor: '#d4e8e0',
+    borderColor: '#8b5cf6',
+    backgroundColor: '#7c3aed',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
@@ -797,8 +846,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   integrationCardEnabledDevice: {
-    borderColor: '#a8d5c4',
-    backgroundColor: '#d4e8e0',
+    borderColor: '#8b5cf6',
+    backgroundColor: '#c4b5fd',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
@@ -806,8 +855,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   integrationCardEnabledExternal: {
-    borderColor: '#a8d5c4',
-    backgroundColor: '#d4e8e0',
+    borderColor: '#8b5cf6',
+    backgroundColor: '#c4b5fd',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
@@ -825,16 +874,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   integrationIconContainerEnabledHealth: {
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#7c3aed',
   },
   integrationIconContainerEnabledDevice: {
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#7c3aed',
   },
   integrationIconContainerEnabledExternal: {
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
   },
   integrationIconContainerDisabled: {
-    backgroundColor: '#c4dbd2',
+    backgroundColor: '#7c3aed',
   },
   integrationTextContainer: {
     flex: 1,
@@ -842,38 +891,38 @@ const styles = StyleSheet.create({
   integrationName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#2d4a42',
+    color: '#fff',
     marginBottom: 4,
   },
   integrationDescription: {
     fontSize: 14,
-    color: '#7a9f94',
+    color: 'rgba(255,255,255,0.75)',
   },
   checkmarkContainer: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkmarkContainerBlue: {
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
   },
   checkmarkContainerPurple: {
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
   },
   infoBox: {
-    backgroundColor: '#d4e8e0',
+    backgroundColor: 'rgba(128, 90, 213, 0.1)',
     borderWidth: 1,
-    borderColor: '#a8d5c4',
+    borderColor: '#8b5cf6',
     borderRadius: 20,
     padding: 16,
     marginBottom: 24,
   },
   infoBoxText: {
     fontSize: 14,
-    color: '#2d4a42',
+    color: '#fff',
     lineHeight: 20,
   },
   // Step 3 styles
@@ -881,7 +930,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 24,
     justifyContent: 'center',
-    backgroundColor: '#f5f8f7',
+    backgroundColor: '#1a0b2e',
   },
   step3Content: {
     width: '100%',
@@ -891,7 +940,7 @@ const styles = StyleSheet.create({
   successIconContainer: {
     width: 96,
     height: 96,
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
     borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
@@ -905,30 +954,25 @@ const styles = StyleSheet.create({
   step3Title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2d4a42',
+    color: '#fff',
     marginBottom: 12,
     textAlign: 'center',
   },
   step3Subtitle: {
     fontSize: 16,
-    color: '#5a8f7f',
+    color: 'rgba(255,255,255,0.85)',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
   },
   summaryCard: {
-    backgroundColor: '#f0f5f3',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 24,
     padding: 24,
     marginBottom: 32,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
     borderWidth: 1,
-    borderColor: '#d4e8e0',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   summaryGrid: {
     flexDirection: 'row',
@@ -940,25 +984,25 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#7a9f94',
+    color: 'rgba(255,255,255,0.7)',
     marginBottom: 4,
   },
   summaryValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#2d4a42',
+    color: '#fff',
   },
   summaryValueReady: {
-    color: '#a8d5c4',
+    color: '#d8b4fe',
   },
   getStartedButton: {
     width: '100%',
-    backgroundColor: '#a8d5c4',
+    backgroundColor: '#8b5cf6',
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#a8d5c4',
+    shadowColor: '#8b5cf6',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
