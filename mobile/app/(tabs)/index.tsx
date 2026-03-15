@@ -9,10 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator, Image } from 'react-native';
-import FloatingMenu from './menu';
+
 
 const { width } = Dimensions.get('window');
-const maxWidth = Math.min(width - 48, 448);
+const maxWidth = Math.min(width - 48, 700);
 
 // ── Change this to your PC's local IP when testing on a real device ──────────
 // const BACKEND_URL = 'http://10.0.2.2:8080'; // Android emulator
@@ -160,7 +160,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
-      <NavigationBar showBackButton={false} userButtonPosition="left" />
+      <NavigationBar showBackButton={false} userButtonPosition="left" menuRoute="/menu" />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
         <View style={[styles.content, { maxWidth }]}>
 
@@ -181,7 +181,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/ai-chat')}
               style={({ pressed }) => [styles.quickToolCard, pressed && styles.quickToolCardPressed]}
             >
-              <Ionicons name="sparkles" size={22} color="#f9f5ff" style={{ marginBottom: 8 }} />
+              <Image source={require('../../assets/images/ai-technology.png')} style={styles.quickToolImage} />
               <Text style={styles.quickToolTitle}>AI Chat</Text>
               <Text style={styles.quickToolSubtitle}>Ask questions and get insights</Text>
             </Pressable>
@@ -189,7 +189,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/logging')}
               style={({ pressed }) => [styles.quickToolCard, pressed && styles.quickToolCardPressed]}
             >
-              <Ionicons name="document-text" size={22} color="#f9f5ff" style={{ marginBottom: 8 }} />
+              <Image source={require('../../assets/images/paralyzed.png')} style={styles.quickToolImage} />
               <Text style={styles.quickToolTitle}>Log Migraine</Text>
               <Text style={styles.quickToolSubtitle}>Record your headache details</Text>
             </Pressable>
@@ -197,7 +197,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/neuro-record')}
               style={({ pressed }) => [styles.quickToolCard, pressed && styles.quickToolCardPressed]}
             >
-              <Ionicons name="bar-chart" size={22} color="#f9f5ff" style={{ marginBottom: 8 }} />
+              <Image source={require('../../assets/images/pie-chart.png')} style={styles.quickToolImage} />
               <Text style={styles.quickToolTitle}>Neuro Record</Text>
               <Text style={styles.quickToolSubtitle}>Open migraine report & calendar</Text>
             </Pressable>
@@ -371,8 +371,6 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      <FloatingMenu />
-
       <Modal visible={showOnboarding} animationType="slide" onRequestClose={() => setShowOnboarding(false)}>
         <OnboardingScreen onComplete={() => setShowOnboarding(false)} />
       </Modal>
@@ -417,12 +415,12 @@ const styles = StyleSheet.create({
   dashboardHeading: { fontSize: 20, fontWeight: '700', color: '#2d4a42', flex: 1 },
   dashboardHeadingDark: { color: '#d4e8e0' },
   refreshButton: { padding: 4 },
-  errorBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', borderRadius: 8, padding: 8, marginBottom: 12 },
-  errorBannerDark: { backgroundColor: '#3a2e1a' },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#3f1b6f', borderRadius: 8, padding: 8, marginBottom: 12 },
+  errorBannerDark: { backgroundColor: '#3f1b6f' },
   errorText: { fontSize: 12, color: '#d97706' },
   dashboardGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginBottom: 24 },
-  dashboardCard: { width: '48%', backgroundColor: '#111', borderWidth: 1, borderColor: '#444', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3, elevation: 2 },
-  dashboardCardDark: { backgroundColor: '#111', borderColor: '#444' },
+  dashboardCard: { width: '48%', backgroundColor: '#231344', borderRadius: 16, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3, elevation: 2 },
+  dashboardCardDark: { backgroundColor: '#231344' },
   weatherCardPressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 },
   dashboardCardSmall: { width: '48%' },
@@ -445,10 +443,12 @@ const styles = StyleSheet.create({
   neuroRecordSubtitleDark: { color: '#c4b5fd' },
   quickToolsRow: { marginTop: 12, marginBottom: 14, width: '100%' },
   quickToolsRowContent: { paddingBottom: 4, gap: 12, alignItems: 'stretch' },
-  quickToolCard: { width: 210, minHeight: 140, backgroundColor: '#4c1d95', borderRadius: 16, borderWidth: 1, borderColor: '#7c3aed', padding: 14, marginRight: 8, justifyContent: 'center' },
+  quickToolCard: { width: 210, minHeight: 150, backgroundColor: '#6107c9', borderRadius: 18, padding: 12, marginRight: 8, justifyContent: 'flex-start', alignItems: 'flex-start', gap: 4, shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 8, elevation: 4 },
+  quickToolCardLog: { width: 210, minHeight: 150, backgroundColor: '#6107c9', borderRadius: 18, padding: 12, marginRight: 8, justifyContent: 'flex-start', alignItems: 'flex-start', gap: 4, shadowColor: '#000', shadowOpacity: 0.28, shadowRadius: 8, elevation: 4 },
   quickToolCardPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
-  quickToolTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 2 },
-  quickToolSubtitle: { color: '#e9d8ff', fontSize: 12, lineHeight: 16 },
+  quickToolImage: { width: 38, height: 38, marginBottom: 10, borderRadius: 10, overflow: 'hidden', alignSelf: 'center' },
+  quickToolTitle: { color: '#fff', fontSize: 16, fontWeight: '800', marginBottom: 3 },
+  quickToolSubtitle: { color: '#f2e8ff', fontSize: 12, lineHeight: 16 },
   patternSliderSection: { marginTop: 16, marginBottom: 16 },
   patternSliderHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   patternsHeading: { fontSize: 16, fontWeight: '700', color: '#fff' },
@@ -456,15 +456,15 @@ const styles = StyleSheet.create({
   viewAllPatterns: { fontSize: 12, color: '#9f7aea', fontWeight: '600' },
   viewAllPatternsDark: { color: '#d8b4fe' },
   patternSliderScroll: { flexDirection: 'row' },
-  patternCard: { width: 180, backgroundColor: '#4c1d95', borderRadius: 16, borderWidth: 1, borderColor: '#7c3aed', padding: 12, marginRight: 12 },
-  patternCardDark: { backgroundColor: '#4c1d95', borderColor: '#7c3aed' },
+  patternCard: { width: 180, backgroundColor: '#2b0f4d', borderRadius: 16, padding: 12, marginRight: 12, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, elevation: 2 },
+  patternCardDark: { backgroundColor: '#2b0f4d' },
   patternTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 4 },
   patternTitleDark: { color: '#fff' },
   patternSubtitle: { color: '#f3e8ff', fontSize: 12, marginBottom: 8 },
   patternSubtitleDark: { color: '#f3e8ff' },
   patternConfidence: { color: '#f3e8ff', fontWeight: '700', fontSize: 16 },
-  emergencyVerticalCard: { width: 160, backgroundColor: '#4c1d95', borderRadius: 16, borderWidth: 1, borderColor: '#7c3aed', padding: 12, marginRight: 12, justifyContent: 'flex-start', alignItems: 'flex-start' },
-  emergencyVerticalCardDark: { backgroundColor: '#4c1d95', borderColor: '#7c3aed' },
+  emergencyVerticalCard: { width: 160, backgroundColor: '#b91c1c', borderRadius: 16, padding: 12, marginRight: 12, justifyContent: 'flex-start', alignItems: 'flex-start', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, elevation: 2 },
+  emergencyVerticalCardDark: { backgroundColor: '#b91c1c' },
   emergencyVerticalTitle: { color: '#fff', fontSize: 14, fontWeight: '700', marginTop: 8 },
   emergencyVerticalTitleDark: { color: '#fff' },
   emergencyVerticalHint: { color: '#c4b5fd', fontSize: 12, marginTop: 4 },

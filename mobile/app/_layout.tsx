@@ -4,11 +4,10 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { UserProvider, useUser } from '@/contexts/UserContext';
-
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
 import { useNotifications } from '@/hooks/useNotifications';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import React from 'react';
 
 export const unstable_settings = {

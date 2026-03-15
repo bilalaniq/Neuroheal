@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-    Dimensions,
+    View, Text, StyleSheet, ScrollView,
+    ActivityIndicator, Dimensions, Pressable,
 } from 'react-native';
-import { ModernHeader } from '@/components/ModernHeader';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRealtimeMonitoring } from '@/hooks/useRealtimeMonitoring';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Location from 'expo-location';
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width - 48, 448);
@@ -28,65 +24,108 @@ interface ForecastDay {
 
 export default function WeatherForecastScreen() {
     const router = useRouter();
-    const { darkMode } = useTheme();
+    const insets = useSafeAreaInsets();
     const [forecast, setForecast] = useState<ForecastDay[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentLocation, setCurrentLocation] = useState<{ lat: number; lon: number } | null>(null);
+    const [locationName, setLocationName] = useState<string>('');
 
     const realtime = useRealtimeMonitoring(0, { trackSteps: false });
 
-    useEffect(() => {
-        fetchForecast();
-    }, [realtime.weather.latitude, realtime.weather.longitude]);
+    // Get location name from coordinates
+    const getLocationName = async (lat: number, lon: number) => {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`
+            );
+            const data = await response.json();
+            
+            if (data.address) {
+                const city = data.address.city || data.address.town || data.address.village || data.address.county;
+                const country = data.address.country;
+                if (city && country) {
+                    setLocationName(`${city}, ${country}`);
+                } else if (country) {
+                    setLocationName(country);
+                } else {
+                    setLocationName(`${lat.toFixed(2)}, ${lon.toFixed(2)}`);
+                }
+            }
+        } catch (err) {
+            setLocationName(`${lat.toFixed(2)}, ${lon.toFixed(2)}`);
+        }
+    };
 
     const fetchForecast = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            // Get location from realtime monitoring
-            const latitude = realtime.weather.latitude ?? 40.7128; // Default to NYC
-            const longitude = realtime.weather.longitude ?? -74.006;
-
-            setCurrentLocation({ lat: latitude, lon: longitude });
-
-            // Fetch 5-day forecast from Open-Meteo API (completely free, no API key needed)
-            const response = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`
-            );
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch weather data');
+            // Try to get actual device location first
+            let latitude, longitude;
+            
+            try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status === 'granted') {
+                    const location = await Location.getCurrentPositionAsync({});
+                    latitude = location.coords.latitude;
+                    longitude = location.coords.longitude;
+                } else {
+                    // Use IP-based location as fallback
+                    const ipResponse = await fetch('http://ip-api.com/json/');
+                    const ipData = await ipResponse.json();
+                    if (ipData.status === 'success') {
+                        latitude = ipData.lat;
+                        longitude = ipData.lon;
+                    } else {
+                        throw new Error('Could not detect location');
+                    }
+                }
+            } catch (locError) {
+                // Final fallback - coordinates for Pakistan (Islamabad)
+                latitude = 33.6844;
+                longitude = 73.0479;
+                setLocationName('Islamabad, Pakistan');
             }
 
-            const data = await response.json();
+            if (latitude && longitude) {
+                setCurrentLocation({ lat: latitude, lon: longitude });
+                await getLocationName(latitude, longitude);
 
-            // Process the next 5 days (skip today, which is index 0)
-            const forecastDays: ForecastDay[] = [];
-            for (let i = 1; i <= 5 && i < data.daily.time.length; i++) {
-                forecastDays.push({
-                    date: data.daily.time[i],
-                    maxTemp: data.daily.temperature_2m_max[i],
-                    minTemp: data.daily.temperature_2m_min[i],
-                    weatherCode: data.daily.weather_code[i],
-                    weatherLabel: getWeatherLabel(data.daily.weather_code[i]),
-                    precipitationMm: data.daily.precipitation_sum[i] ?? 0,
-                    windSpeed: data.daily.wind_speed_10m_max[i] ?? 0,
-                });
+                const response = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`
+                );
+                
+                if (!response.ok) throw new Error('Failed to fetch weather data');
+                const data = await response.json();
+
+                const forecastDays: ForecastDay[] = [];
+                for (let i = 1; i <= 5 && i < data.daily.time.length; i++) {
+                    forecastDays.push({
+                        date: data.daily.time[i],
+                        maxTemp: data.daily.temperature_2m_max[i],
+                        minTemp: data.daily.temperature_2m_min[i],
+                        weatherCode: data.daily.weather_code[i],
+                        weatherLabel: getWeatherLabel(data.daily.weather_code[i]),
+                        precipitationMm: data.daily.precipitation_sum[i] ?? 0,
+                        windSpeed: data.daily.wind_speed_10m_max[i] ?? 0,
+                    });
+                }
+                setForecast(forecastDays);
             }
-
-            setForecast(forecastDays);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load forecast');
-            console.error('Weather forecast error:', err);
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        fetchForecast();
+    }, []);
+
     const getWeatherLabel = (code: number): string => {
-        // WMO Weather interpretation codes
         if (code === 0) return 'Clear sky';
         if (code === 1 || code === 2) return 'Mostly clear';
         if (code === 3) return 'Overcast';
@@ -112,143 +151,174 @@ export default function WeatherForecastScreen() {
         return 'help-circle';
     };
 
+    const getWeatherIconColor = (code: number): string => {
+        if (code === 0) return '#fbbf24';
+        if (code === 1 || code === 2) return '#f59e0b';
+        if (code === 3) return '#94a3b8';
+        if (code === 45 || code === 48) return '#cbd5e1';
+        if (code >= 51 && code <= 67) return '#60a5fa';
+        if (code >= 71 && code <= 86) return '#bae6fd';
+        if (code >= 95 && code <= 99) return '#a78bfa';
+        return '#c084fc';
+    };
+
     const formatDate = (dateString: string): string => {
         const date = new Date(dateString + 'T00:00:00');
         return date.toLocaleDateString('default', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
+            weekday: 'short', month: 'short', day: 'numeric',
         });
     };
 
     return (
-        <View style={[styles.container, darkMode && styles.containerDark]}>
-            <ModernHeader title="5-Day Forecast" onBack={() => router.back()} />
+        <View style={styles.container}>
 
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+            {/* ── Custom Header matching index.tsx ── */}
+            <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+                <Pressable
+                    onPress={() => router.back()}
+                    style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
+                >
+                    <Ionicons name="chevron-back" size={20} color="#e9d5ff" />
+                </Pressable>
+                <Text style={styles.headerTitle}>5-Day Forecast</Text>
+                <Pressable
+                    onPress={fetchForecast}
+                    style={({ pressed }) => [styles.refreshBtn, pressed && styles.btnPressed]}
+                >
+                    <Ionicons name="refresh" size={18} color="#e9d5ff" />
+                </Pressable>
+            </View>
+
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={[styles.content, { maxWidth }]}>
-                    {/* Location info */}
+
+                    {/* Location card */}
                     {currentLocation && (
-                        <View style={[styles.locationCard, darkMode && styles.locationCardDark]}>
-                            <Ionicons
-                                name="location"
-                                size={20}
-                                color={darkMode ? '#a8d5c4' : '#2d4a42'}
-                            />
-                            <Text style={[styles.locationText, darkMode && styles.locationTextDark]}>
-                                {realtime.weather.locationLabel || `${currentLocation.lat.toFixed(2)}, ${currentLocation.lon.toFixed(2)}`}
+                        <View style={styles.locationCard}>
+                            <View style={styles.locationIconWrap}>
+                                <Ionicons name="location" size={16} color="#c084fc" />
+                            </View>
+                            <Text style={styles.locationText} numberOfLines={1}>
+                                {locationName || `${currentLocation.lat.toFixed(2)}, ${currentLocation.lon.toFixed(2)}`}
                             </Text>
                         </View>
                     )}
 
+                    {/* Current temp hero */}
+                    {realtime.weather.temperatureC !== null && (
+                        <View style={styles.heroCard}>
+                            <View style={styles.heroLeft}>
+                                <Text style={styles.heroTemp}>
+                                    {Math.round(realtime.weather.temperatureC)}°C
+                                </Text>
+                                <Text style={styles.heroLabel}>
+                                    {realtime.weather.weatherLabel || 'Current'}
+                                </Text>
+                                <Text style={styles.heroSub}>Right now</Text>
+                            </View>
+                            <View style={styles.heroIconWrap}>
+                                <Ionicons name="partly-sunny" size={64} color="#fbbf24" />
+                            </View>
+                        </View>
+                    )}
+
+                    {/* States */}
                     {loading ? (
                         <View style={styles.centerContent}>
-                            <ActivityIndicator size="large" color="#a8d5c4" />
-                            <Text style={[styles.loadingText, darkMode && styles.loadingTextDark]}>
-                                Loading forecast...
-                            </Text>
+                            <ActivityIndicator size="large" color="#a78bfa" />
+                            <Text style={styles.loadingText}>Loading forecast...</Text>
                         </View>
                     ) : error ? (
                         <View style={styles.centerContent}>
-                            <Ionicons name="alert-circle" size={48} color="#ef4444" />
-                            <Text style={[styles.errorText, darkMode && styles.errorTextDark]}>
-                                {error}
-                            </Text>
-                            <Text style={[styles.retryText, darkMode && styles.retryTextDark]}>
-                                Please check your internet connection
-                            </Text>
+                            <View style={styles.errorIconWrap}>
+                                <Ionicons name="alert-circle" size={36} color="#f87171" />
+                            </View>
+                            <Text style={styles.errorText}>{error}</Text>
+                            <Pressable
+                                onPress={fetchForecast}
+                                style={({ pressed }) => [styles.retryBtn, pressed && styles.btnPressed]}
+                            >
+                                <Text style={styles.retryBtnText}>Try again</Text>
+                            </Pressable>
                         </View>
                     ) : (
                         <View style={styles.forecastList}>
                             {forecast.map((day, index) => (
-                                <View
-                                    key={index}
-                                    style={[styles.forecastCard, darkMode && styles.forecastCardDark]}
-                                >
-                                    <View style={styles.dateSection}>
-                                        <Text style={[styles.dateText, darkMode && styles.dateTextDark]}>
-                                            {formatDate(day.date)}
-                                        </Text>
-                                        <Text style={[styles.dayNumber, darkMode && styles.dayNumberDark]}>
-                                            Day {index + 1}
-                                        </Text>
+                                <View key={index} style={styles.forecastCard}>
+
+                                    {/* Left: date + day badge */}
+                                    <View style={styles.cardLeft}>
+                                        <View style={styles.dayBadge}>
+                                            <Text style={styles.dayBadgeText}>Day {index + 1}</Text>
+                                        </View>
+                                        <Text style={styles.dateText}>{formatDate(day.date)}</Text>
+                                        <Text style={styles.conditionText}>{day.weatherLabel}</Text>
                                     </View>
 
-                                    <View style={styles.weatherSection}>
-                                        <View style={styles.iconContainer}>
+                                    {/* Center: icon */}
+                                    <View style={styles.cardCenter}>
+                                        <View style={[
+                                            styles.weatherIconWrap,
+                                            { borderColor: getWeatherIconColor(day.weatherCode) + '44' }
+                                        ]}>
                                             <Ionicons
                                                 name={getWeatherIcon(day.weatherCode)}
-                                                size={40}
-                                                color={darkMode ? '#d4e8e0' : '#2d4a42'}
+                                                size={32}
+                                                color={getWeatherIconColor(day.weatherCode)}
                                             />
                                         </View>
-                                        <View style={styles.conditionContainer}>
-                                            <Text style={[styles.conditionText, darkMode && styles.conditionTextDark]}>
-                                                {day.weatherLabel}
-                                            </Text>
-                                        </View>
                                     </View>
 
-                                    <View style={styles.tempSection}>
-                                        <View style={styles.tempBox}>
-                                            <Text style={[styles.tempLabel, darkMode && styles.tempLabelDark]}>
-                                                High
-                                            </Text>
-                                            <Text style={[styles.tempValue, darkMode && styles.tempValueDark]}>
-                                                {Math.round(day.maxTemp)}°C
-                                            </Text>
-                                        </View>
-
-                                        <View style={styles.divider} />
-
-                                        <View style={styles.tempBox}>
-                                            <Text style={[styles.tempLabel, darkMode && styles.tempLabelDark]}>
-                                                Low
-                                            </Text>
-                                            <Text style={[styles.tempValue, darkMode && styles.tempValueDark]}>
-                                                {Math.round(day.minTemp)}°C
-                                            </Text>
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.detailsSection}>
-                                        {day.precipitationMm > 0 && (
-                                            <View style={styles.detailItem}>
-                                                <Ionicons
-                                                    name="water-outline"
-                                                    size={16}
-                                                    color={darkMode ? '#94a3b8' : '#64748b'}
-                                                />
-                                                <Text style={[styles.detailText, darkMode && styles.detailTextDark]}>
-                                                    {day.precipitationMm}mm
+                                    {/* Right: temps + details */}
+                                    <View style={styles.cardRight}>
+                                        <View style={styles.tempRow}>
+                                            <View style={styles.tempChip}>
+                                                <Text style={styles.tempChipLabel}>H</Text>
+                                                <Text style={styles.tempHigh}>
+                                                    {Math.round(day.maxTemp)}°
                                                 </Text>
                                             </View>
-                                        )}
+                                            <View style={[styles.tempChip, styles.tempChipLow]}>
+                                                <Text style={styles.tempChipLabel}>L</Text>
+                                                <Text style={styles.tempLow}>
+                                                    {Math.round(day.minTemp)}°
+                                                </Text>
+                                            </View>
+                                        </View>
 
-                                        <View style={styles.detailItem}>
-                                            <Ionicons
-                                                name="analytics"
-                                                size={16}
-                                                color={darkMode ? '#94a3b8' : '#64748b'}
-                                            />
-                                            <Text style={[styles.detailText, darkMode && styles.detailTextDark]}>
-                                                {Math.round(day.windSpeed)} km/h
-                                            </Text>
+                                        <View style={styles.detailsRow}>
+                                            {day.precipitationMm > 0 && (
+                                                <View style={styles.detailPill}>
+                                                    <Ionicons name="water-outline" size={11} color="#60a5fa" />
+                                                    <Text style={styles.detailPillText}>
+                                                        {day.precipitationMm}mm
+                                                    </Text>
+                                                </View>
+                                            )}
+                                            <View style={styles.detailPill}>
+                                                <Ionicons name="analytics" size={11} color="#a78bfa" />
+                                                <Text style={styles.detailPillText}>
+                                                    {Math.round(day.windSpeed)} km/h
+                                                </Text>
+                                            </View>
                                         </View>
                                     </View>
+
                                 </View>
                             ))}
                         </View>
                     )}
 
+                    {/* Footer */}
                     <View style={styles.footer}>
-                        <Text style={[styles.footerText, darkMode && styles.footerTextDark]}>
-                            Data powered by Open-Meteo
-                        </Text>
-                        <Text style={[styles.footerSubtext, darkMode && styles.footerSubtextDark]}>
-                            Free weather API · No tracking
-                        </Text>
+                        <Ionicons name="globe-outline" size={14} color="#6b21a8" />
+                        <Text style={styles.footerText}>  Powered by Open-Meteo · Free & private</Text>
                     </View>
+
                 </View>
             </ScrollView>
         </View>
@@ -258,218 +328,278 @@ export default function WeatherForecastScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f8f7',
+        backgroundColor: '#000',
     },
-    containerDark: {
-        backgroundColor: '#1a2622',
+
+    // ── Header ──
+    header: {
+        backgroundColor: '#0d0618',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#2b0f4d',
+        gap: 12,
     },
-    scrollView: {
+    backBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: '#231344',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#4c1d95',
+    },
+    refreshBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: '#231344',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#4c1d95',
+    },
+    headerTitle: {
         flex: 1,
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#fff',
+        textAlign: 'center',
+        letterSpacing: 0.2,
     },
+    btnPressed: {
+        opacity: 0.7,
+        transform: [{ scale: 0.96 }],
+    },
+
+    // ── Scroll ──
+    scrollView: { flex: 1 },
     scrollContent: {
-        padding: 24,
-        paddingTop: 12,
+        padding: 20,
+        paddingTop: 16,
+        alignItems: 'center',
     },
-    content: {
-        width: '100%',
-        alignSelf: 'center',
-    },
+    content: { width: '100%' },
+
+    // ── Location ──
     locationCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f0f5f3',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: '#d4e8e0',
-    },
-    locationCardDark: {
-        backgroundColor: '#253029',
-        borderColor: '#3f5451',
-    },
-    locationText: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#2d4a42',
-        marginLeft: 12,
-        flex: 1,
-    },
-    locationTextDark: {
-        color: '#d4e8e0',
-    },
-    centerContent: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 60,
-    },
-    loadingText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#2d4a42',
-        marginTop: 16,
-    },
-    loadingTextDark: {
-        color: '#d4e8e0',
-    },
-    errorText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#991b1b',
-        marginTop: 12,
-        textAlign: 'center',
-    },
-    errorTextDark: {
-        color: '#fca5a5',
-    },
-    retryText: {
-        fontSize: 14,
-        color: '#7a9f94',
-        marginTop: 8,
-        textAlign: 'center',
-    },
-    retryTextDark: {
-        color: '#7a9f94',
-    },
-    forecastList: {
-        gap: 16,
-    },
-    forecastCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 2,
-    },
-    forecastCardDark: {
-        backgroundColor: '#1f2937',
-        borderColor: '#374151',
-    },
-    dateSection: {
-        marginBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
-        paddingBottom: 12,
-    },
-    dateText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#111827',
-        marginBottom: 4,
-    },
-    dateTextDark: {
-        color: '#f3f4f6',
-    },
-    dayNumber: {
-        fontSize: 12,
-        color: '#6b7280',
-    },
-    dayNumberDark: {
-        color: '#9ca3af',
-    },
-    weatherSection: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        paddingVertical: 12,
-    },
-    iconContainer: {
-        marginRight: 16,
-    },
-    conditionContainer: {
-        flex: 1,
-    },
-    conditionText: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: '#2d4a42',
-    },
-    conditionTextDark: {
-        color: '#d4e8e0',
-    },
-    tempSection: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        backgroundColor: '#f9fafb',
+        backgroundColor: '#160a2e',
         borderRadius: 12,
         padding: 12,
+        marginBottom: 14,
+        borderWidth: 1,
+        borderColor: '#2b0f4d',
+        gap: 10,
     },
-    tempBox: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    divider: {
-        width: 1,
-        height: 40,
-        backgroundColor: '#e5e7eb',
-        marginHorizontal: 12,
-    },
-    tempLabel: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginBottom: 4,
-        fontWeight: '500',
-    },
-    tempLabelDark: {
-        color: '#9ca3af',
-    },
-    tempValue: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#111827',
-    },
-    tempValueDark: {
-        color: '#f3f4f6',
-    },
-    detailsSection: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    detailItem: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f0f5f3',
+    locationIconWrap: {
+        width: 28,
+        height: 28,
         borderRadius: 8,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
+        backgroundColor: '#2b0f4d',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    detailText: {
+    locationText: {
+        flex: 1,
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#c4b5fd',
+    },
+
+    // ── Hero current temp ──
+    heroCard: {
+        backgroundColor: '#231344',
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: '#4c1d95',
+    },
+    heroLeft: { gap: 4 },
+    heroTemp: {
+        fontSize: 52,
+        fontWeight: '800',
+        color: '#fff',
+        letterSpacing: -1,
+    },
+    heroLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#c4b5fd',
+    },
+    heroSub: {
         fontSize: 12,
-        color: '#64748b',
-        marginLeft: 6,
+        color: '#6b21a8',
+    },
+    heroIconWrap: {
+        opacity: 0.9,
+    },
+
+    // ── Loading / Error ──
+    centerContent: {
+        alignItems: 'center',
+        paddingVertical: 60,
+        gap: 16,
+    },
+    loadingText: {
+        fontSize: 15,
+        color: '#c4b5fd',
         fontWeight: '500',
     },
-    detailTextDark: {
-        color: '#cbd5e1',
-    },
-    footer: {
+    errorIconWrap: {
+        width: 64,
+        height: 64,
+        borderRadius: 20,
+        backgroundColor: '#2b0f4d',
         alignItems: 'center',
-        marginTop: 40,
-        paddingTop: 20,
-        borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
+        justifyContent: 'center',
     },
-    footerText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#6b7280',
+    errorText: {
+        fontSize: 15,
+        color: '#fca5a5',
+        textAlign: 'center',
+        fontWeight: '500',
     },
-    footerSubtext: {
-        fontSize: 11,
-        color: '#9ca3af',
+    retryBtn: {
+        backgroundColor: '#6107c9',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 24,
         marginTop: 4,
     },
-    footerTextDark: {
-        color: '#9ca3af',
+    retryBtnText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
     },
-    footerSubtextDark: {
-        color: '#6b7280',
+
+    // ── Forecast cards ──
+    forecastList: { gap: 10 },
+    forecastCard: {
+        backgroundColor: '#231344',
+        borderRadius: 18,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        borderWidth: 1,
+        borderColor: '#2b0f4d',
+    },
+
+    // Left
+    cardLeft: { flex: 1.2, gap: 3 },
+    dayBadge: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#4c1d95',
+        borderRadius: 6,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        marginBottom: 2,
+    },
+    dayBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#e9d5ff',
+        letterSpacing: 0.3,
+    },
+    dateText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#fff',
+    },
+    conditionText: {
+        fontSize: 11,
+        color: '#c4b5fd',
+        fontWeight: '500',
+    },
+
+    // Center
+    cardCenter: { alignItems: 'center' },
+    weatherIconWrap: {
+        width: 56,
+        height: 56,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    // Right
+    cardRight: { flex: 1.1, alignItems: 'flex-end', gap: 8 },
+    tempRow: { flexDirection: 'row', gap: 6 },
+    tempChip: {
+        backgroundColor: '#6107c9',
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        alignItems: 'center',
+    },
+    tempChipLow: {
+        backgroundColor: '#1e0d38',
+        borderWidth: 1,
+        borderColor: '#4c1d95',
+    },
+    tempChipLabel: {
+        fontSize: 9,
+        color: 'rgba(255,255,255,0.5)',
+        fontWeight: '600',
+    },
+    tempHigh: {
+        fontSize: 15,
+        fontWeight: '800',
+        color: '#fff',
+    },
+    tempLow: {
+        fontSize: 15,
+        fontWeight: '800',
+        color: '#c4b5fd',
+    },
+    detailsRow: {
+        flexDirection: 'row',
+        gap: 4,
+        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
+    },
+    detailPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#160a2e',
+        borderRadius: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 3,
+        gap: 3,
+        borderWidth: 1,
+        borderColor: '#2b0f4d',
+    },
+    detailPillText: {
+        fontSize: 10,
+        color: '#c4b5fd',
+        fontWeight: '500',
+    },
+
+    // ── Footer ──
+    footer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 32,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#160a2e',
+        paddingBottom: 8,
+    },
+    footerText: {
+        fontSize: 11,
+        color: '#4c1d95',
+        fontWeight: '500',
     },
 });

@@ -1,16 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    Dimensions,
-    ScrollView,
-    TouchableOpacity,
-    FlatList
+    View, Text, StyleSheet, Dimensions,
+    TouchableOpacity, ScrollView,
 } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -27,10 +20,8 @@ interface MigraineReportChartProps {
 }
 
 export const MigraineReportChart: React.FC<MigraineReportChartProps> = ({ migraineDays }) => {
-    const { darkMode } = useTheme();
     const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30'>('30');
 
-    // Format date to YYYY-MM-DD
     const formatLocalDate = (d: Date) => {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -38,193 +29,129 @@ export const MigraineReportChart: React.FC<MigraineReportChartProps> = ({ migrai
         return `${yyyy}-${mm}-${dd}`;
     };
 
-    // Get data for selected period
     const periodData = useMemo(() => {
         const days = parseInt(selectedPeriod);
         const today = new Date();
         const data: MigraineDayData[] = [];
-        
-        // Create array of last 'days' days
         for (let i = days - 1; i >= 0; i--) {
             const date = new Date();
             date.setDate(today.getDate() - i);
             const dateStr = formatLocalDate(date);
-            
-            // Find if there's a migraine on this day
             const migraineDay = migraineDays.find(d => d.date === dateStr);
-            
             data.push({
                 date: dateStr,
                 hasMigraine: migraineDay?.hasMigraine || false,
-                severity: migraineDay?.severity || 0
+                severity: migraineDay?.severity || 0,
             });
         }
-        
         return data;
     }, [migraineDays, selectedPeriod]);
 
-    // Calculate stats
     const stats = useMemo(() => {
         const total = periodData.filter(d => d.hasMigraine).length;
-        const migraineDaysList = periodData.filter(d => d.hasMigraine);
-        const avg = migraineDaysList.length > 0 
-            ? (migraineDaysList.reduce((acc, d) => acc + d.severity, 0) / migraineDaysList.length).toFixed(1)
+        const list  = periodData.filter(d => d.hasMigraine);
+        const avg   = list.length
+            ? (list.reduce((a, d) => a + d.severity, 0) / list.length).toFixed(1)
             : '0.0';
         const severe = periodData.filter(d => d.severity >= 7).length;
-        const free = periodData.filter(d => !d.hasMigraine).length;
-        
+        const free   = periodData.filter(d => !d.hasMigraine).length;
         return { total, avg, severe, free };
     }, [periodData]);
 
-    // Get color based on severity
     const getSeverityColor = (severity: number) => {
-        if (severity >= 7) return '#ef4444';
-        if (severity >= 4) return '#f59e0b';
-        if (severity > 0) return '#10b981';
-        return '#9ca3af';
+        if (severity >= 7) return '#f87171';
+        if (severity >= 4) return '#fbbf24';
+        if (severity > 0)  return '#34d399';
+        return '#3f3f6a';
     };
 
-    // Get severity label
     const getSeverityLabel = (severity: number) => {
         if (severity >= 7) return 'Severe';
         if (severity >= 4) return 'Moderate';
-        if (severity > 0) return 'Mild';
+        if (severity > 0)  return 'Mild';
         return 'No Pain';
     };
 
-    // Format date for display
     const formatDisplayDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('default', { 
-            month: 'short', 
-            day: 'numeric' 
-        });
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('default', { month: 'short', day: 'numeric' });
     };
 
-    // Get last 7 days for preview
     const previewData = periodData.slice(-7);
 
     return (
         <ScrollView
-            style={styles.container}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.contentContainer}
+            style={styles.root}
         >
-            {/* Header */}
-            <LinearGradient
-                colors={darkMode ? ['#1f2937', '#111827'] : ['#f0f9f7', '#e6f3ef']}
-                style={styles.headerGradient}
-            >
-                <View style={styles.headerContent}>
-                    <View style={styles.headerIconContainer}>
-                        <Ionicons name="analytics" size={28} color={darkMode ? '#a8d5c4' : '#2d4a42'} />
-                    </View>
-                    <View>
-                        <Text style={[styles.headerTitle, darkMode && styles.headerTitleDark]}>
-                            Migraine Report
-                        </Text>
-                        <Text style={[styles.headerSubtitle, darkMode && styles.headerSubtitleDark]}>
-                            Track your migraine patterns
-                        </Text>
-                    </View>
+            {/* ── Header ── */}
+            <View style={styles.headerCard}>
+                <View style={styles.headerIconWrap}>
+                    <Ionicons name="analytics" size={24} color="#c084fc" />
                 </View>
-            </LinearGradient>
+                <View>
+                    <Text style={styles.headerTitle}>Migraine Report</Text>
+                    <Text style={styles.headerSub}>Track your migraine patterns</Text>
+                </View>
+            </View>
 
-            {/* Period Selector */}
-            <View style={styles.periodSelector}>
-                {(['7', '30'] as const).map((period) => (
+            {/* ── Period selector ── */}
+            <View style={styles.periodWrap}>
+                {(['7', '30'] as const).map(p => (
                     <TouchableOpacity
-                        key={period}
-                        style={[
-                            styles.periodButton,
-                            selectedPeriod === period && styles.periodButtonActive,
-                            { backgroundColor: darkMode ? '#1f2937' : '#ffffff' }
-                        ]}
-                        onPress={() => setSelectedPeriod(period)}
+                        key={p}
+                        style={[styles.periodBtn, selectedPeriod === p && styles.periodBtnActive]}
+                        onPress={() => setSelectedPeriod(p)}
                     >
                         <Text style={[
-                            styles.periodButtonText,
-                            selectedPeriod === period && styles.periodButtonTextActive,
-                            { color: darkMode ? '#9ca3af' : '#4b5563' }
+                            styles.periodBtnText,
+                            selectedPeriod === p && styles.periodBtnTextActive,
                         ]}>
-                            {period} Days
+                            {p} Days
                         </Text>
                     </TouchableOpacity>
                 ))}
             </View>
 
-            {/* Stats Cards */}
+            {/* ── Stats grid ── */}
             <View style={styles.statsGrid}>
-                <View style={[styles.statCard, darkMode && styles.statCardDark]}>
-                    <Text style={[styles.statValue, darkMode && styles.statValueDark]}>
-                        {stats.total}
-                    </Text>
-                    <Text style={[styles.statLabel, darkMode && styles.statLabelDark]}>
-                        Migraine Days
-                    </Text>
-                    <Ionicons name="calendar" size={24} color={darkMode ? '#a8d5c4' : '#2d4a42'} style={styles.statIcon} />
-                </View>
-
-                <View style={[styles.statCard, darkMode && styles.statCardDark]}>
-                    <Text style={[styles.statValue, darkMode && styles.statValueDark]}>
-                        {stats.avg}
-                    </Text>
-                    <Text style={[styles.statLabel, darkMode && styles.statLabelDark]}>
-                        Avg Severity
-                    </Text>
-                    <Ionicons name="thermometer" size={24} color={darkMode ? '#a8d5c4' : '#2d4a42'} style={styles.statIcon} />
-                </View>
-
-                <View style={[styles.statCard, darkMode && styles.statCardDark]}>
-                    <Text style={[styles.statValue, darkMode && styles.statValueDark]}>
-                        {stats.severe}
-                    </Text>
-                    <Text style={[styles.statLabel, darkMode && styles.statLabelDark]}>
-                        Severe Days
-                    </Text>
-                    <Ionicons name="warning" size={24} color={darkMode ? '#a8d5c4' : '#2d4a42'} style={styles.statIcon} />
-                </View>
-
-                <View style={[styles.statCard, darkMode && styles.statCardDark]}>
-                    <Text style={[styles.statValue, darkMode && styles.statValueDark]}>
-                        {stats.free}
-                    </Text>
-                    <Text style={[styles.statLabel, darkMode && styles.statLabelDark]}>
-                        Pain-Free
-                    </Text>
-                    <Ionicons name="happy" size={24} color={darkMode ? '#a8d5c4' : '#2d4a42'} style={styles.statIcon} />
-                </View>
+                {[
+                    { value: stats.total,  label: 'Migraine\nDays',   icon: 'calendar',    color: '#c084fc' },
+                    { value: stats.avg,    label: 'Avg\nSeverity',    icon: 'thermometer', color: '#f87171' },
+                    { value: stats.severe, label: 'Severe\nDays',     icon: 'warning',     color: '#fbbf24' },
+                    { value: stats.free,   label: 'Pain-Free\nDays',  icon: 'happy',       color: '#34d399' },
+                ].map((s, i) => (
+                    <View key={i} style={styles.statCard}>
+                        <View style={[styles.statIconWrap, { borderColor: s.color + '44' }]}>
+                            <Ionicons name={s.icon as any} size={16} color={s.color} />
+                        </View>
+                        <Text style={styles.statValue}>{s.value}</Text>
+                        <Text style={styles.statLabel}>{s.label}</Text>
+                    </View>
+                ))}
             </View>
 
-            {/* Simple Chart */}
-            <View style={[styles.chartCard, darkMode && styles.chartCardDark]}>
-                <Text style={[styles.chartTitle, darkMode && styles.chartTitleDark]}>
-                    Last 7 Days Overview
-                </Text>
+            {/* ── Bar chart ── */}
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Last 7 Days Overview</Text>
 
                 <View style={styles.chartContainer}>
                     {previewData.map((day, index) => {
-                        const color = getSeverityColor(day.severity);
-                        const height = day.severity * 12; // Max height 120 for severity 10
-                        
+                        const color  = getSeverityColor(day.severity);
+                        const height = Math.max(4, day.severity * 12);
                         return (
                             <View key={index} style={styles.barWrapper}>
-                                <View style={styles.barContainer}>
-                                    <View 
-                                        style={[
-                                            styles.bar,
-                                            { 
-                                                height: Math.max(4, height),
-                                                backgroundColor: color,
-                                                opacity: day.hasMigraine ? 1 : 0.3
-                                            }
-                                        ]} 
-                                    />
+                                <View style={styles.barBg}>
+                                    <View style={[
+                                        styles.bar,
+                                        { height, backgroundColor: color, opacity: day.hasMigraine ? 1 : 0.2 }
+                                    ]} />
                                     {day.hasMigraine && (
                                         <View style={[styles.barDot, { backgroundColor: color }]} />
                                     )}
                                 </View>
-                                <Text style={[styles.barLabel, darkMode && styles.barLabelDark]}>
+                                <Text style={styles.barLabel}>
                                     {formatDisplayDate(day.date)}
                                 </Text>
                             </View>
@@ -233,396 +160,368 @@ export const MigraineReportChart: React.FC<MigraineReportChartProps> = ({ migrai
                 </View>
 
                 {/* Legend */}
-                <View style={styles.legendContainer}>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#ef4444' }]} />
-                        <Text style={[styles.legendText, darkMode && styles.legendTextDark]}>Severe (7-10)</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#f59e0b' }]} />
-                        <Text style={[styles.legendText, darkMode && styles.legendTextDark]}>Moderate (4-6)</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-                        <Text style={[styles.legendText, darkMode && styles.legendTextDark]}>Mild (1-3)</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#9ca3af' }]} />
-                        <Text style={[styles.legendText, darkMode && styles.legendTextDark]}>No Pain</Text>
-                    </View>
+                <View style={styles.legendRow}>
+                    {[
+                        { color: '#f87171', label: 'Severe (7-10)' },
+                        { color: '#fbbf24', label: 'Moderate (4-6)' },
+                        { color: '#34d399', label: 'Mild (1-3)' },
+                        { color: '#3f3f6a', label: 'No Pain' },
+                    ].map((l, i) => (
+                        <View key={i} style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: l.color }]} />
+                            <Text style={styles.legendText}>{l.label}</Text>
+                        </View>
+                    ))}
                 </View>
             </View>
 
-            {/* Daily List */}
-            <View style={[styles.listCard, darkMode && styles.listCardDark]}>
-                <Text style={[styles.listTitle, darkMode && styles.listTitleDark]}>
-                    Daily Breakdown
-                </Text>
-
+            {/* ── Daily breakdown ── */}
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Daily Breakdown</Text>
                 {periodData.slice().reverse().map((day, index) => (
-                    <View key={index} style={styles.listItem}>
-                        <View style={styles.listItemLeft}>
-                            <Text style={[styles.listDate, darkMode && styles.listDateDark]}>
-                                {new Date(day.date).toLocaleDateString('default', { 
-                                    weekday: 'short', 
-                                    month: 'short', 
-                                    day: 'numeric' 
+                    <View
+                        key={index}
+                        style={[
+                            styles.listItem,
+                            index === periodData.length - 1 && { borderBottomWidth: 0 }
+                        ]}
+                    >
+                        <View style={styles.listLeft}>
+                            <Text style={styles.listDate}>
+                                {new Date(day.date + 'T00:00:00').toLocaleDateString('default', {
+                                    weekday: 'short', month: 'short', day: 'numeric',
                                 })}
                             </Text>
-                            <View style={[styles.severityBadge, { backgroundColor: getSeverityColor(day.severity) }]}>
-                                <Text style={styles.severityBadgeText}>
+                            <View style={[
+                                styles.badge,
+                                { backgroundColor: getSeverityColor(day.severity) + '33',
+                                  borderColor:      getSeverityColor(day.severity) + '66' }
+                            ]}>
+                                <Text style={[styles.badgeText, { color: getSeverityColor(day.severity) }]}>
                                     {getSeverityLabel(day.severity)}
                                 </Text>
                             </View>
                         </View>
-                        <Text style={[styles.listSeverity, darkMode && styles.listSeverityDark]}>
-                            {day.severity > 0 ? `${day.severity}/10` : '-'}
+                        <Text style={styles.listSeverity}>
+                            {day.severity > 0 ? `${day.severity}/10` : '—'}
                         </Text>
                     </View>
                 ))}
             </View>
 
-            {/* Summary */}
+            {/* ── Summary banner ── */}
             <LinearGradient
-                colors={darkMode ? ['#2d4a42', '#1a3630'] : ['#e6f3ef', '#d4e8e0']}
+                colors={['#2b0f4d', '#160a2e']}
                 style={styles.summaryCard}
             >
-                <Ionicons name="document-text" size={32} color={darkMode ? '#a8d5c4' : '#2d4a42'} />
+                <View style={styles.summaryIconWrap}>
+                    <Ionicons name="document-text" size={24} color="#c084fc" />
+                </View>
                 <View style={styles.summaryText}>
-                    <Text style={[styles.summaryTitle, darkMode && styles.summaryTitleDark]}>
-                        Summary
-                    </Text>
-                    <Text style={[styles.summaryDescription, darkMode && styles.summaryDescriptionDark]}>
-                        {stats.total} migraine days • Avg {stats.avg}/10 • {stats.severe} severe
+                    <Text style={styles.summaryTitle}>Summary</Text>
+                    <Text style={styles.summarySub}>
+                        {stats.total} migraine days · Avg {stats.avg}/10 · {stats.severe} severe
                     </Text>
                 </View>
             </LinearGradient>
 
-            {/* Tips */}
-            <BlurView intensity={darkMode ? 30 : 50} tint={darkMode ? 'dark' : 'light'} style={styles.tipsCard}>
-                <View style={styles.tipsHeader}>
-                    <Ionicons name="bulb-outline" size={22} color={darkMode ? '#a8d5c4' : '#2d4a42'} />
-                    <Text style={[styles.tipsTitle, darkMode && styles.tipsTitleDark]}>Tip</Text>
+            {/* ── Tip ── */}
+            <View style={styles.tipCard}>
+                <View style={styles.tipHeader}>
+                    <Ionicons name="bulb-outline" size={18} color="#fbbf24" />
+                    <Text style={styles.tipTitle}>Tip</Text>
                 </View>
-                <Text style={[styles.tipsText, darkMode && styles.tipsTextDark]}>
-                    {stats.severe > 2 
-                        ? "Consider tracking your triggers. Stress and sleep are common factors."
+                <Text style={styles.tipText}>
+                    {stats.severe > 2
+                        ? 'Consider tracking your triggers. Stress and sleep are common factors.'
                         : stats.total > 10
-                        ? "Regular sleep and hydration might help reduce frequency."
-                        : "Keep up the good work! Continue tracking to identify patterns."}
+                        ? 'Regular sleep and hydration might help reduce frequency.'
+                        : 'Keep up the good work! Continue tracking to identify patterns.'}
                 </Text>
-            </BlurView>
+            </View>
+
         </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    root: {
         flex: 1,
-        backgroundColor: '#f5f8f7',
+        backgroundColor: 'transparent',
     },
     contentContainer: {
         paddingBottom: 32,
-    },
-    headerGradient: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        marginBottom: 12,
-        borderRadius: 24,
-        padding: 20,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    headerIconContainer: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#111827',
-    },
-    headerTitleDark: {
-        color: '#ffffff',
-    },
-    headerSubtitle: {
-        fontSize: 13,
-        color: '#4b5563',
-        marginTop: 2,
-    },
-    headerSubtitleDark: {
-        color: '#9ca3af',
-    },
-    periodSelector: {
-        flexDirection: 'row',
-        marginHorizontal: 16,
-        marginBottom: 16,
-        backgroundColor: '#f1f5f9',
-        borderRadius: 10,
+        gap: 12,
         padding: 4,
     },
-    periodButton: {
+
+    // ── Header ──
+    headerCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        backgroundColor: '#231344',
+        borderRadius: 18,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#2b0f4d',
+    },
+    headerIconWrap: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        backgroundColor: 'rgba(192,132,252,0.12)',
+        borderWidth: 1,
+        borderColor: '#c084fc44',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 2,
+    },
+    headerSub: {
+        fontSize: 12,
+        color: '#c4b5fd',
+    },
+
+    // ── Period selector ──
+    periodWrap: {
+        flexDirection: 'row',
+        backgroundColor: '#160a2e',
+        borderRadius: 12,
+        padding: 4,
+        borderWidth: 1,
+        borderColor: '#2b0f4d',
+    },
+    periodBtn: {
         flex: 1,
-        paddingVertical: 8,
-        borderRadius: 8,
+        paddingVertical: 9,
+        borderRadius: 9,
         alignItems: 'center',
     },
-    periodButtonActive: {
-        backgroundColor: '#2d4a42',
+    periodBtnActive: {
+        backgroundColor: '#6107c9',
     },
-    periodButtonText: {
+    periodBtnText: {
         fontSize: 13,
         fontWeight: '600',
+        color: '#6b21a8',
     },
-    periodButtonTextActive: {
-        color: '#ffffff',
+    periodBtnTextActive: {
+        color: '#fff',
     },
+
+    // ── Stats ──
     statsGrid: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginHorizontal: 12,
         gap: 8,
     },
     statCard: {
-        width: (CARD_WIDTH - 24) / 2,
-        backgroundColor: '#ffffff',
-        borderRadius: 20,
-        padding: 16,
-        position: 'relative',
+        flex: 1,
+        backgroundColor: '#231344',
+        borderRadius: 16,
+        padding: 12,
+        alignItems: 'center',
+        gap: 5,
+        borderWidth: 1,
+        borderColor: '#2b0f4d',
     },
-    statCardDark: {
-        backgroundColor: '#1f2937',
+    statIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 2,
     },
     statValue: {
-        fontSize: 28,
-        fontWeight: '700',
-        color: '#2d4a42',
-        marginBottom: 4,
-    },
-    statValueDark: {
-        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#fff',
     },
     statLabel: {
-        fontSize: 12,
-        color: '#4b5563',
+        fontSize: 9,
+        color: '#c4b5fd',
+        textAlign: 'center',
         fontWeight: '500',
+        lineHeight: 13,
     },
-    statLabelDark: {
-        color: '#9ca3af',
+
+    // ── Card (chart + list) ──
+    card: {
+        backgroundColor: '#231344',
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#2b0f4d',
     },
-    statIcon: {
-        position: 'absolute',
-        top: 16,
-        right: 16,
-        opacity: 0.5,
+    cardTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 16,
     },
-    chartCard: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        padding: 20,
-    },
-    chartCardDark: {
-        backgroundColor: '#1f2937',
-    },
-    chartTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#111827',
-        marginBottom: 20,
-    },
-    chartTitleDark: {
-        color: '#ffffff',
-    },
+
+    // Bar chart
     chartContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'flex-end',
         height: 140,
-        marginBottom: 20,
+        marginBottom: 16,
     },
     barWrapper: {
         alignItems: 'center',
         flex: 1,
     },
-    barContainer: {
+    barBg: {
         height: 120,
-        width: 24,
-        backgroundColor: '#e5e7eb',
-        borderRadius: 12,
-        marginBottom: 8,
+        width: 22,
+        backgroundColor: '#160a2e',
+        borderRadius: 10,
+        marginBottom: 6,
         position: 'relative',
+        overflow: 'hidden',
     },
     bar: {
         width: '100%',
-        borderRadius: 12,
+        borderRadius: 10,
         position: 'absolute',
         bottom: 0,
     },
     barDot: {
         position: 'absolute',
         top: -4,
-        left: 8,
+        left: 7,
         width: 8,
         height: 8,
         borderRadius: 4,
     },
     barLabel: {
-        fontSize: 10,
-        color: '#6b7280',
+        fontSize: 9,
+        color: '#6b21a8',
+        textAlign: 'center',
     },
-    barLabelDark: {
-        color: '#9ca3af',
-    },
-    legendContainer: {
+
+    // Legend
+    legendRow: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 12,
-        paddingTop: 16,
+        gap: 10,
+        paddingTop: 14,
         borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
+        borderTopColor: '#2b0f4d',
     },
     legendItem: {
         flexDirection: 'row',
         alignItems: 'center',
         minWidth: '45%',
+        gap: 6,
     },
     legendDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        marginRight: 6,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
     },
     legendText: {
         fontSize: 11,
-        color: '#4b5563',
+        color: '#c4b5fd',
     },
-    legendTextDark: {
-        color: '#9ca3af',
-    },
-    listCard: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        padding: 20,
-    },
-    listCardDark: {
-        backgroundColor: '#1f2937',
-    },
-    listTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#111827',
-        marginBottom: 16,
-    },
-    listTitleDark: {
-        color: '#ffffff',
-    },
+
+    // List
     listItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: '#2b0f4d',
     },
-    listItemLeft: {
+    listLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+        flex: 1,
     },
     listDate: {
         fontSize: 13,
         fontWeight: '500',
-        color: '#1f2937',
-        width: 100,
+        color: '#e9d5ff',
+        width: 105,
     },
-    listDateDark: {
-        color: '#d1d5db',
-    },
-    severityBadge: {
+    badge: {
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
+        paddingVertical: 3,
+        borderRadius: 8,
+        borderWidth: 1,
     },
-    severityBadgeText: {
-        color: '#ffffff',
+    badgeText: {
         fontSize: 10,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     listSeverity: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#1f2937',
+        fontWeight: '700',
+        color: '#fff',
     },
-    listSeverityDark: {
-        color: '#d1d5db',
-    },
+
+    // Summary
     summaryCard: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        borderRadius: 24,
-        padding: 20,
+        borderRadius: 18,
+        padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
+        gap: 14,
+        borderWidth: 1,
+        borderColor: '#4c1d95',
     },
-    summaryText: {
-        flex: 1,
+    summaryIconWrap: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: 'rgba(192,132,252,0.15)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
+    summaryText: { flex: 1 },
     summaryTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#111827',
-        marginBottom: 2,
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 3,
     },
-    summaryTitleDark: {
-        color: '#ffffff',
+    summarySub: {
+        fontSize: 12,
+        color: '#c4b5fd',
     },
-    summaryDescription: {
-        fontSize: 13,
-        color: '#4b5563',
+
+    // Tip
+    tipCard: {
+        backgroundColor: '#1a0f00',
+        borderRadius: 18,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#fbbf2433',
     },
-    summaryDescriptionDark: {
-        color: '#9ca3af',
-    },
-    tipsCard: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        borderRadius: 24,
-        padding: 20,
-        overflow: 'hidden',
-        backgroundColor: 'rgba(255,255,255,0.8)',
-    },
-    tipsHeader: {
+    tipHeader: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 8,
         marginBottom: 8,
-        gap: 6,
     },
-    tipsTitle: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#111827',
+    tipTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#fbbf24',
     },
-    tipsTitleDark: {
-        color: '#ffffff',
-    },
-    tipsText: {
+    tipText: {
         fontSize: 13,
-        color: '#4b5563',
-        lineHeight: 18,
-    },
-    tipsTextDark: {
-        color: '#d1d5db',
+        color: '#fde68a',
+        lineHeight: 19,
     },
 });
