@@ -1,225 +1,148 @@
 import React, { useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    Pressable,
-    ScrollView,
-    ActivityIndicator,
-    Alert,
-    TextInput,
+    View, Text, StyleSheet, Pressable, ScrollView,
+    ActivityIndicator, Alert, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { API_BASE_URL, API_ENDPOINTS, logAPI } from '@/config/api';
 import { AIInsightButton } from '@/components/AIInsightButton';
 
-interface MorningCheckProps {
-    onSuccess?: () => void;
-}
+interface MorningCheckProps { onSuccess?: () => void; }
 
 interface TriggerFormData {
-    stress_level: string;
-    sleep_hours: string;
-    sleep_quality: string;
-    hydration: string;
-    caffeine: string;
-    alcohol_last_night: boolean;
-    weather_change: boolean;
-    hormonal_changes: boolean;
-    skipped_meals: boolean;
-    irregular_schedule: boolean;
-    bright_lights: boolean;
-    loud_noises: boolean;
-    strong_smells: boolean;
-    physical_activity: boolean;
-    eye_strain: boolean;
-    neck_tension: boolean;
-    workload: string;
-    medication_taken: boolean;
-    missed_medication: boolean;
-    screen_time: string;
-    posture_issues: boolean;
-    anxiety_level: string;
-    recent_illness: boolean;
-    dehydration: boolean;
-    sugar_consumption: string;
-    magnesium_deficiency: boolean;
+    stress_level: string; sleep_hours: string; sleep_quality: string;
+    hydration: string; caffeine: string; alcohol_last_night: boolean;
+    weather_change: boolean; hormonal_changes: boolean; skipped_meals: boolean;
+    irregular_schedule: boolean; bright_lights: boolean; loud_noises: boolean;
+    strong_smells: boolean; physical_activity: boolean; eye_strain: boolean;
+    neck_tension: boolean; workload: string; medication_taken: boolean;
+    missed_medication: boolean; screen_time: string; posture_issues: boolean;
+    anxiety_level: string; recent_illness: boolean; dehydration: boolean;
+    sugar_consumption: string; magnesium_deficiency: boolean;
 }
 
 interface PredictionResult {
-    migraine_predicted: boolean;
-    risk_level: string;
-    probability: number;
-    top_triggers: string[];
-    recommendation: string;
-    timestamp: string;
+    migraine_predicted: boolean; risk_level: string;
+    probability: number; top_triggers: string[];
+    recommendation: string; timestamp: string;
 }
 
+const T = {
+    bg: '#000', card: '#231344', cardDeep: '#160a2e', border: '#2b0f4d',
+    text: '#fff', sub: '#c4b5fd', muted: '#6b21a8',
+    accent: '#6107c9', green: '#34d399', amber: '#fbbf24',
+    red: '#f87171', indigo: '#a78bfa', blue: '#60a5fa',
+};
+
 export const MorningCheck: React.FC<MorningCheckProps> = ({ onSuccess }) => {
-    const { darkMode } = useTheme();
     const { userData } = useUser();
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<PredictionResult | null>(null);
+    const [result,  setResult]  = useState<PredictionResult | null>(null);
     const [formData, setFormData] = useState<TriggerFormData>({
-        stress_level: '5',
-        sleep_hours: '7',
-        sleep_quality: 'Good',
-        hydration: 'Adequate',
-        caffeine: 'Moderate',
-        alcohol_last_night: false,
-        weather_change: false,
-        hormonal_changes: false,
-        skipped_meals: false,
-        irregular_schedule: false,
-        bright_lights: false,
-        loud_noises: false,
-        strong_smells: false,
-        physical_activity: false,
-        eye_strain: false,
-        neck_tension: false,
-        workload: 'Normal',
-        medication_taken: false,
-        missed_medication: false,
-        screen_time: 'Moderate',
-        posture_issues: false,
-        anxiety_level: '5',
-        recent_illness: false,
-        dehydration: false,
-        sugar_consumption: 'Normal',
-        magnesium_deficiency: false,
+        stress_level: '5', sleep_hours: '7', sleep_quality: 'Good',
+        hydration: 'Adequate', caffeine: 'Moderate', alcohol_last_night: false,
+        weather_change: false, hormonal_changes: false, skipped_meals: false,
+        irregular_schedule: false, bright_lights: false, loud_noises: false,
+        strong_smells: false, physical_activity: false, eye_strain: false,
+        neck_tension: false, workload: 'Normal', medication_taken: false,
+        missed_medication: false, screen_time: 'Moderate', posture_issues: false,
+        anxiety_level: '5', recent_illness: false, dehydration: false,
+        sugar_consumption: 'Normal', magnesium_deficiency: false,
     });
 
-    const toggleTrigger = (trigger: keyof TriggerFormData) => {
-        setFormData({
-            ...formData,
-            [trigger]: !formData[trigger],
-        });
-    };
+    const setF = (key: keyof TriggerFormData, val: any) =>
+        setFormData(prev => ({ ...prev, [key]: val }));
+    const toggle = (key: keyof TriggerFormData) =>
+        setFormData(prev => ({ ...prev, [key]: !prev[key] }));
 
     const handlePredict = async () => {
         setLoading(true);
         const endpoint = API_ENDPOINTS.migraineToday;
-        const url = `${API_BASE_URL}${endpoint}`;
+        const url      = `${API_BASE_URL}${endpoint}`;
 
-        // Calculate lack of sleep (8 hours is optimal)
         const sleepHoursNum = parseFloat(formData.sleep_hours) || 7;
-        const lackOfSleep = Math.max(0, 8 - sleepHoursNum);
+        const stressRaw     = parseInt(formData.stress_level)  || 5;
+        const stress04      = Math.round((stressRaw - 1) / 9 * 4);
+        const lackOfSleep   = Math.max(0, 8 - sleepHoursNum);
 
-        // Convert stress from 1-10 (UI slider) to 0-4 (backend scale)
-        const stressRaw = parseInt(formData.stress_level) || 5;
-        const stress04 = Math.round((stressRaw - 1) / 9 * 4); // 1->0, 5->2, 10->4
-
-        // Map form values to backend expected values (0-4 scale)
-        const payload = {
-            // Environmental triggers - present = moderate intensity (2), independent of stress
-            cold_air_exposure: 0,
-            perfume_or_strong_odors: formData.strong_smells ? 2 : 0,
-            bright_or_flashing_lights: formData.bright_lights ? 2 : 0,
-            loud_sounds: formData.loud_noises ? 2 : 0,
-            changing_weather: formData.weather_change ? 3 : 0,
-            hot_and_humid_weather: 0,
-
-            // Lifestyle triggers
-            physical_exertion: formData.physical_activity ? 2 : 0,
-            overslept: 0,
-            lack_of_sleep: Math.min(4, Math.round(lackOfSleep)), // Scale 0-4
-            stress: stress04,  // correctly mapped 1-10 to 0-4
-            post_stress_letdown: 0,
-            missed_a_meal: formData.skipped_meals ? 2 : 0,
-            dehydration: formData.dehydration ? 2 : 0,
-
-            // Food triggers
-            nightshade_vegetables: 0,
-            smoked_or_cured_meat: 0,
-            bananas: 0,
-            caffeine: formData.caffeine === 'High' ? 3 : formData.caffeine === 'Moderate' ? 2 : 1,
-            citrus_fruit_or_juice: 0,
-            beer: formData.alcohol_last_night ? 2 : 0,
-            aged_or_blue_cheese: 0,
-            chocolate: 0,
-            red_wine: formData.alcohol_last_night ? 2 : 0,
-            liquor_or_spirits: formData.alcohol_last_night ? 2 : 0,
-            sugar_and_sweets: formData.sugar_consumption === 'High' ? 3 : formData.sugar_consumption === 'Normal' ? 2 : 1,
-
-            // Previous day context
-            prev_day_migraine: 0,
-            is_weekend: new Date().getDay() === 0 || new Date().getDay() === 6 ? 1 : 0
+        const payload: any = {
+            cold_air_exposure:         0,
+            perfume_or_strong_odors:   formData.strong_smells   ? 2 : 0,
+            bright_or_flashing_lights: formData.bright_lights   ? 2 : 0,
+            loud_sounds:               formData.loud_noises      ? 2 : 0,
+            changing_weather:          formData.weather_change   ? 3 : 0,
+            hot_and_humid_weather:     0,
+            physical_exertion:         formData.physical_activity ? 2 : 0,
+            overslept:                 0,
+            lack_of_sleep:             Math.min(4, Math.round(lackOfSleep)),
+            stress:                    stress04,
+            post_stress_letdown:       0,
+            missed_a_meal:             formData.skipped_meals  ? 2 : 0,
+            dehydration:               formData.dehydration    ? 2 : 0,
+            nightshade_vegetables:     0, smoked_or_cured_meat: 0, bananas: 0,
+            caffeine:                  formData.caffeine === 'High' ? 3 : formData.caffeine === 'Moderate' ? 2 : 1,
+            citrus_fruit_or_juice:     0,
+            beer:                      formData.alcohol_last_night ? 2 : 0,
+            aged_or_blue_cheese:       0, chocolate: 0,
+            red_wine:                  formData.alcohol_last_night ? 2 : 0,
+            liquor_or_spirits:         formData.alcohol_last_night ? 2 : 0,
+            sugar_and_sweets:          formData.sugar_consumption === 'High' ? 3 : formData.sugar_consumption === 'Normal' ? 2 : 1,
+            prev_day_migraine:         0,
+            is_weekend:                new Date().getDay() === 0 || new Date().getDay() === 6 ? 1 : 0,
         };
 
         logAPI('request', endpoint, payload);
-
         try {
             const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
+            const text = await response.text();
+            logAPI('response', endpoint, { status: response.status, body: text });
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${text}`);
+            const data = JSON.parse(text);
 
-            const responseText = await response.text();
-            logAPI('response', endpoint, { status: response.status, body: responseText });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${responseText}`);
-            }
-
-            const data = JSON.parse(responseText);
-            console.log('[MorningCheck] Success:', data);
-
-            // --- Rule-based override ---
-            // The ML model under-weights sleep and stress alone.
-            // Apply clinical rules on top to correct obvious cases.
-            const sleepHours = parseFloat(formData.sleep_hours) || 7;
-            const stressLevel = parseInt(formData.stress_level) || 5;
-            const anxietyLevel = parseInt(formData.anxiety_level) || 5;
-
-            let adjustedData = { ...data };
-
-            // Count how many severe risk factors are present
+            const sleepHours  = parseFloat(formData.sleep_hours)  || 7;
+            const stressLevel = parseInt(formData.stress_level)    || 5;
+            const anxietyLevel = parseInt(formData.anxiety_level)  || 5;
             let riskPoints = 0;
-            if (sleepHours <= 4)  riskPoints += 3;       // severely sleep deprived
-            else if (sleepHours <= 6) riskPoints += 2;   // under-slept
+            if (sleepHours <= 4)       riskPoints += 3;
+            else if (sleepHours <= 6)  riskPoints += 2;
             else if (sleepHours <= 6.5) riskPoints += 1;
-            if (stressLevel >= 8)  riskPoints += 2;
+            if (stressLevel >= 8)      riskPoints += 2;
             else if (stressLevel >= 6) riskPoints += 1;
-            if (anxietyLevel >= 8) riskPoints += 1;
+            if (anxietyLevel >= 8)     riskPoints += 1;
             if (formData.alcohol_last_night) riskPoints += 2;
-            if (formData.skipped_meals) riskPoints += 1;
-            if (formData.dehydration) riskPoints += 1;
-            if (formData.weather_change) riskPoints += 1;
+            if (formData.skipped_meals)      riskPoints += 1;
+            if (formData.dehydration)        riskPoints += 1;
+            if (formData.weather_change)     riskPoints += 1;
 
-            // Build override warning list for display
             const ruleWarnings: string[] = [];
-            if (sleepHours <= 4)  ruleWarnings.push(`Only ${sleepHours}h sleep — severe deprivation (major migraine trigger)`);
-            else if (sleepHours <= 6) ruleWarnings.push(`Only ${sleepHours}h sleep — below recommended 7-9h`);
-            if (stressLevel >= 6) ruleWarnings.push(`High stress level (${stressLevel}/10)`);
+            if (sleepHours <= 4)  ruleWarnings.push(`Only ${sleepHours}h sleep — severe deprivation`);
+            else if (sleepHours <= 6) ruleWarnings.push(`Only ${sleepHours}h sleep — below recommended`);
+            if (stressLevel >= 6)  ruleWarnings.push(`High stress level (${stressLevel}/10)`);
             if (anxietyLevel >= 6) ruleWarnings.push(`High anxiety level (${anxietyLevel}/10)`);
             if (formData.alcohol_last_night) ruleWarnings.push('Alcohol consumption last night');
-            if (formData.dehydration) ruleWarnings.push('Dehydration reported');
-            if (formData.skipped_meals) ruleWarnings.push('Skipped meals');
+            if (formData.dehydration)        ruleWarnings.push('Dehydration reported');
+            if (formData.skipped_meals)      ruleWarnings.push('Skipped meals');
 
-            // Override risk level based on points
+            let adjusted = { ...data };
             if (riskPoints >= 4) {
-                adjustedData.risk_level = 'HIGH';
-                adjustedData.migraine_predicted = true;
-                adjustedData.probability = Math.max(data.probability, 0.70);
-                adjustedData.recommendation = 'High risk based on your reported conditions. Rest, stay hydrated, avoid screens and loud environments today.';
+                adjusted.risk_level = 'HIGH'; adjusted.migraine_predicted = true;
+                adjusted.probability = Math.max(data.probability, 0.70);
+                adjusted.recommendation = 'High risk based on your reported conditions. Rest, stay hydrated, avoid screens and loud environments today.';
             } else if (riskPoints >= 2) {
-                adjustedData.risk_level = 'MEDIUM';
-                adjustedData.probability = Math.max(data.probability, 0.40);
-                adjustedData.recommendation = 'Moderate risk today. Take it easy, stay hydrated and monitor your symptoms.';
+                adjusted.risk_level = 'MEDIUM';
+                adjusted.probability = Math.max(data.probability, 0.40);
+                adjusted.recommendation = 'Moderate risk today. Take it easy, stay hydrated and monitor your symptoms.';
             }
+            if (ruleWarnings.length > 0)
+                adjusted.top_triggers = [...new Set([...ruleWarnings, ...(adjusted.top_triggers || [])])];
 
-            // Merge rule-based warnings into top_triggers
-            if (ruleWarnings.length > 0) {
-                const existing = adjustedData.top_triggers || [];
-                adjustedData.top_triggers = [...new Set([...ruleWarnings, ...existing])];
-            }
-
-            setResult(adjustedData);
-            if (onSuccess) onSuccess();
-        } catch (error) {
+            setResult(adjusted);
+            onSuccess?.();
+        } catch (error: any) {
             logAPI('error', endpoint, error);
             Alert.alert('Error', `Failed to predict migraine risk: ${error.message}`);
         } finally {
@@ -227,740 +150,336 @@ export const MorningCheck: React.FC<MorningCheckProps> = ({ onSuccess }) => {
         }
     };
 
-    // Results screen
+    // ── Results ───────────────────────────────────────────────────────────────
     if (result) {
-        const riskColor = result.risk_level === 'HIGH' ? '#ef4444' : result.risk_level === 'MEDIUM' ? '#f59e0b' : '#10b981';
-        const riskIcon = result.risk_level === 'HIGH' ? 'alert-circle' : result.risk_level === 'MEDIUM' ? 'warning' : 'checkmark-circle';
+        const riskColor = result.risk_level === 'HIGH' ? T.red : result.risk_level === 'MEDIUM' ? T.amber : T.green;
+        const riskIcon  = result.risk_level === 'HIGH' ? 'alert-circle' : result.risk_level === 'MEDIUM' ? 'warning' : 'checkmark-circle';
 
         return (
-            <ScrollView
-                style={[
-                    styles.container,
-                    darkMode ? styles.containerDark : styles.containerLight,
-                ]}
-                contentContainerStyle={styles.content}
-            >
-                <View
-                    style={[
-                        styles.resultCard,
-                        darkMode ? styles.resultCardDark : styles.resultCardLight,
-                        { borderLeftWidth: 6, borderLeftColor: riskColor },
-                    ]}
-                >
-                    <Ionicons
-                        name={riskIcon}
-                        size={60}
-                        color={riskColor}
-                        style={{ marginBottom: 16 }}
-                    />
-                    <Text
-                        style={[
-                            styles.resultType,
-                            { color: riskColor },
-                        ]}
-                    >
-                        {result.risk_level} Risk
-                    </Text>
-                    <Text
-                        style={[
-                            styles.resultPercentage,
-                            darkMode ? { color: '#a8d5c4' } : { color: '#7a9f94' },
-                        ]}
-                    >
-                        {(result.probability * 100).toFixed(1)}% likelihood of migraine today
-                    </Text>
-                    <Text
-                        style={[
-                            styles.resultPrediction,
-                            darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                        ]}
-                    >
-                        {result.migraine_predicted ? 'Migraine predicted today' : 'No migraine predicted today'}
-                    </Text>
-                </View>
+            <ScrollView style={s.root} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
-                {result.top_triggers && result.top_triggers.length > 0 && (
-                    <View style={styles.section}>
-                        <Text
-                            style={[
-                                styles.label,
-                                darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                            ]}
-                        >
-                            Top Triggers Today
-                        </Text>
-                        {result.top_triggers.map((trigger: string, idx: number) => (
-                            <View key={idx} style={styles.triggerItem}>
-                                <Ionicons name="alert" size={16} color="#ef4444" />
-                                <Text
-                                    style={[
-                                        styles.triggerText,
-                                        darkMode ? { color: '#a8d5c4' } : { color: '#7a9f94' },
-                                    ]}
-                                >
-                                    {trigger}
-                                </Text>
-                            </View>
-                        ))}
+                {/* Hero result card */}
+                <View style={[s.heroCard, { borderLeftColor: riskColor }]}>
+                    <View style={[s.heroIconWrap, { backgroundColor: riskColor + '22', borderColor: riskColor + '55' }]}>
+                        <Ionicons name={riskIcon as any} size={36} color={riskColor} />
                     </View>
-                )}
-
-                {result.recommendation && (
-                    <View style={styles.section}>
-                        <Text
-                            style={[
-                                styles.label,
-                                darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                            ]}
-                        >
-                            Recommendation
-                        </Text>
-                        <View
-                            style={[
-                                styles.recommendationBox,
-                                darkMode ? styles.recommendationBoxDark : styles.recommendationBoxLight,
-                            ]}
-                        >
-                            <Ionicons name="bulb" size={20} color="#10b981" style={{ marginRight: 8 }} />
-                            <Text
-                                style={[
-                                    styles.recommendationText,
-                                    darkMode ? { color: '#a8d5c4' } : { color: '#7a9f94' },
-                                ]}
-                            >
-                                {result.recommendation}
+                    <View style={s.heroRight}>
+                        <Text style={[s.heroRisk, { color: riskColor }]}>{result.risk_level} Risk</Text>
+                        <Text style={s.heroPct}>{(result.probability * 100).toFixed(1)}% likelihood today</Text>
+                        <View style={[s.predictedPill, {
+                            backgroundColor: result.migraine_predicted ? T.red + '22' : T.green + '22',
+                            borderColor:     result.migraine_predicted ? T.red + '55' : T.green + '55',
+                        }]}>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: result.migraine_predicted ? T.red : T.green }}>
+                                {result.migraine_predicted ? 'Migraine predicted' : 'No migraine predicted'}
                             </Text>
                         </View>
                     </View>
+                </View>
+
+                {/* Top triggers */}
+                {result.top_triggers?.length > 0 && (
+                    <>
+                        <View style={s.secHeader}>
+                            <View style={[s.secDot, { backgroundColor: T.red }]} />
+                            <Text style={s.secTitle}>Top Triggers Today</Text>
+                        </View>
+                        <View style={s.card}>
+                            {result.top_triggers.map((t, i) => (
+                                <View key={i} style={[s.triggerRow, i > 0 && { borderTopWidth: 1, borderTopColor: T.border }]}>
+                                    <View style={s.triggerIconWrap}>
+                                        <Ionicons name="alert" size={13} color={T.red} />
+                                    </View>
+                                    <Text style={s.triggerText}>{t}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </>
                 )}
 
-                {/* AI Insight Button */}
+                {/* Recommendation */}
+                {result.recommendation && (
+                    <>
+                        <View style={s.secHeader}>
+                            <View style={[s.secDot, { backgroundColor: T.amber }]} />
+                            <Text style={s.secTitle}>Recommendation</Text>
+                        </View>
+                        <View style={s.recommendCard}>
+                            <View style={s.recommendIconWrap}>
+                                <Ionicons name="bulb" size={20} color={T.amber} />
+                            </View>
+                            <Text style={s.recommendText}>{result.recommendation}</Text>
+                        </View>
+                    </>
+                )}
+
                 <AIInsightButton type="daily_risk" data={result} />
 
-                <Pressable onPress={() => setResult(null)} style={styles.submitButton}>
-                    <Text style={styles.submitButtonText}>Check Again</Text>
+                <Pressable
+                    onPress={() => setResult(null)}
+                    style={({ pressed }) => [s.submitBtn, pressed && s.pressed]}
+                >
+                    <Ionicons name="refresh" size={18} color="#fff" />
+                    <Text style={s.submitBtnText}>Check Again</Text>
                 </Pressable>
             </ScrollView>
         );
     }
 
-    // Form screen
+    // ── Form ─────────────────────────────────────────────────────────────────
+
+    // Reusable option row selector
+    const OptionRow = ({ field, options }: { field: keyof TriggerFormData; options: string[] }) => (
+        <View style={s.optionRow}>
+            {options.map(opt => {
+                const active = formData[field] === opt;
+                return (
+                    <Pressable key={opt} onPress={() => setF(field, opt)}
+                        style={[s.optionBtn, active && s.optionBtnActive]}>
+                        <Text style={[s.optionText, active && s.optionTextActive]}>{opt}</Text>
+                    </Pressable>
+                );
+            })}
+        </View>
+    );
+
+    // Reusable number scale
+    const Scale = ({ field, count = 10 }: { field: keyof TriggerFormData; count?: number }) => (
+        <View style={s.scaleRow}>
+            {Array.from({ length: count }, (_, i) => {
+                const val = i + 1;
+                const active = parseInt(formData[field] as string) === val;
+                const color  = val <= 3 ? T.green : val <= 6 ? T.amber : T.red;
+                return (
+                    <Pressable key={val} onPress={() => setF(field, String(val))}
+                        style={[s.scaleBtn, active && { backgroundColor: color, borderColor: color }]}>
+                        <Text style={[s.scaleBtnText, active && { color: '#fff' }]}>{val}</Text>
+                    </Pressable>
+                );
+            })}
+        </View>
+    );
+
+    const TOGGLES = [
+        { key: 'bright_lights',      label: 'Bright Lights',        icon: 'sunny',         color: T.amber },
+        { key: 'loud_noises',        label: 'Loud Noises',          icon: 'volume-high',   color: T.amber },
+        { key: 'strong_smells',      label: 'Strong Smells',        icon: 'flower',        color: T.indigo },
+        { key: 'eye_strain',         label: 'Eye Strain',           icon: 'eye',           color: T.blue },
+        { key: 'neck_tension',       label: 'Neck Tension',         icon: 'body',          color: T.red },
+        { key: 'posture_issues',     label: 'Poor Posture',         icon: 'accessibility', color: T.sub },
+        { key: 'skipped_meals',      label: 'Skipped Meals',        icon: 'restaurant',    color: T.amber },
+        { key: 'irregular_schedule', label: 'Irregular Schedule',   icon: 'time',          color: T.blue },
+        { key: 'weather_change',     label: 'Weather Change',       icon: 'cloud',         color: T.blue },
+        { key: 'hormonal_changes',   label: 'Hormonal Changes',     icon: 'fitness',       color: T.indigo },
+        { key: 'alcohol_last_night', label: 'Alcohol Last Night',   icon: 'wine',          color: T.red },
+        { key: 'recent_illness',     label: 'Recent Illness',       icon: 'medkit',        color: T.red },
+        { key: 'magnesium_deficiency',label:'Magnesium Deficiency', icon: 'flask',         color: T.green },
+        { key: 'dehydration',        label: 'Dehydration',          icon: 'water',         color: T.blue },
+        { key: 'physical_activity',  label: 'Strenuous Activity',   icon: 'barbell',       color: T.green },
+    ];
+
     return (
-        <ScrollView
-            style={[
-                styles.container,
-                darkMode ? styles.containerDark : styles.containerLight,
-            ]}
-            contentContainerStyle={styles.content}
-        >
-            <Text
-                style={[
-                    styles.sectionTitle,
-                    darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                ]}
-            >
-                Morning Risk Check
-            </Text>
-            <Text
-                style={[
-                    styles.sectionSubtitle,
-                    darkMode ? { color: '#a8d5c4' } : { color: '#7a9f94' },
-                ]}
-            >
-                Check your migraine risk for today
-            </Text>
+        <ScrollView style={s.root} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+
+            <Text style={s.pageTitle}>Morning Risk Check</Text>
+            <Text style={s.pageSub}>Check your migraine risk for today</Text>
 
             {/* Sleep & Rest */}
-            <Text
-                style={[
-                    styles.sectionSubheading,
-                    darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                ]}
-            >
-                Sleep & Rest
-            </Text>
-
-            <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
-                    Hours of Sleep Last Night
-                </Text>
-                <TextInput
-                    style={[styles.input, darkMode ? styles.inputDark : styles.inputLight]}
-                    placeholder="7"
-                    placeholderTextColor={darkMode ? '#5a8f7f' : '#a8d5c4'}
-                    keyboardType="numeric"
-                    value={formData.sleep_hours}
-                    onChangeText={(text) => setFormData({ ...formData, sleep_hours: text })}
-                />
-                <Text
-                    style={[
-                        styles.helperText,
-                        darkMode ? { color: '#5a8f7f' } : { color: '#a8d5c4' },
-                    ]}
-                >
-                    Recommended: 7-9 hours
-                </Text>
+            <View style={s.secHeader}>
+                <View style={[s.secDot, { backgroundColor: T.indigo }]} />
+                <Text style={s.secTitle}>Sleep & Rest</Text>
             </View>
-
-            <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
-                    Sleep Quality
-                </Text>
-                <View style={styles.optionRow}>
-                    {['Poor', 'Fair', 'Good'].map((option) => (
-                        <Pressable
-                            key={option}
-                            onPress={() => setFormData({ ...formData, sleep_quality: option })}
-                            style={[
-                                styles.optionButton,
-                                darkMode ? styles.optionButtonDark : styles.optionButtonLight,
-                                formData.sleep_quality === option &&
-                                (darkMode ? styles.optionButtonSelectedDark : styles.optionButtonSelected),
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    formData.sleep_quality === option && styles.optionTextSelected,
-                                ]}
-                            >
-                                {option}
-                            </Text>
-                        </Pressable>
-                    ))}
+            <View style={s.card}>
+                <View style={s.fieldWrap}>
+                    <Text style={s.fieldLabel}>Hours of Sleep Last Night</Text>
+                    <TextInput
+                        style={s.input}
+                        placeholder="7"
+                        placeholderTextColor={T.muted}
+                        keyboardType="numeric"
+                        value={formData.sleep_hours}
+                        onChangeText={v => setF('sleep_hours', v)}
+                    />
+                    <Text style={s.helper}>Recommended: 7–9 hours</Text>
+                </View>
+                <View style={s.divider} />
+                <View style={s.fieldWrap}>
+                    <Text style={s.fieldLabel}>Sleep Quality</Text>
+                    <OptionRow field="sleep_quality" options={['Poor','Fair','Good']} />
                 </View>
             </View>
 
             {/* Stress & Mental Health */}
-            <Text
-                style={[
-                    styles.sectionSubheading,
-                    darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                ]}
-            >
-                Stress & Mental Health
-            </Text>
-
-            <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
-                    Current Stress Level: {formData.stress_level}/10
-                </Text>
-                <View style={styles.sliderContainer}>
-                    {[...Array(10)].map((_, i) => (
-                        <Pressable
-                            key={i}
-                            onPress={() => setFormData({ ...formData, stress_level: String(i + 1) })}
-                            style={[
-                                styles.sliderButton,
-                                darkMode ? styles.sliderButtonDark : styles.sliderButtonLight,
-                                parseInt(formData.stress_level) === i + 1 &&
-                                (darkMode ? styles.sliderButtonActiveDark : styles.sliderButtonActive),
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.sliderButtonText,
-                                    darkMode ? styles.sliderButtonTextDark : styles.sliderButtonTextLight,
-                                    parseInt(formData.stress_level) === i + 1 && styles.sliderButtonTextSelected,
-                                ]}
-                            >
-                                {i + 1}
-                            </Text>
-                        </Pressable>
-                    ))}
-                </View>
+            <View style={s.secHeader}>
+                <View style={[s.secDot, { backgroundColor: T.red }]} />
+                <Text style={s.secTitle}>Stress & Mental Health</Text>
             </View>
-
-            <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
-                    Current Anxiety Level: {formData.anxiety_level}/10
-                </Text>
-                <View style={styles.sliderContainer}>
-                    {[...Array(10)].map((_, i) => (
-                        <Pressable
-                            key={i}
-                            onPress={() => setFormData({ ...formData, anxiety_level: String(i + 1) })}
-                            style={[
-                                styles.sliderButton,
-                                darkMode ? styles.sliderButtonDark : styles.sliderButtonLight,
-                                parseInt(formData.anxiety_level) === i + 1 &&
-                                (darkMode ? styles.sliderButtonActiveDark : styles.sliderButtonActive),
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.sliderButtonText,
-                                    darkMode ? styles.sliderButtonTextDark : styles.sliderButtonTextLight,
-                                    parseInt(formData.anxiety_level) === i + 1 && styles.sliderButtonTextSelected,
-                                ]}
-                            >
-                                {i + 1}
+            <View style={s.card}>
+                <View style={s.fieldWrap}>
+                    <View style={s.fieldLabelRow}>
+                        <Text style={s.fieldLabel}>Stress Level</Text>
+                        <View style={[s.valuePill, {
+                            backgroundColor: parseInt(formData.stress_level) >= 7 ? T.red + '33' : parseInt(formData.stress_level) >= 4 ? T.amber + '33' : T.green + '33',
+                            borderColor:     parseInt(formData.stress_level) >= 7 ? T.red + '66' : parseInt(formData.stress_level) >= 4 ? T.amber + '66' : T.green + '66',
+                        }]}>
+                            <Text style={{ fontSize: 12, fontWeight: '800', color: parseInt(formData.stress_level) >= 7 ? T.red : parseInt(formData.stress_level) >= 4 ? T.amber : T.green }}>
+                                {formData.stress_level}/10
                             </Text>
-                        </Pressable>
-                    ))}
+                        </View>
+                    </View>
+                    <Scale field="stress_level" />
+                </View>
+                <View style={s.divider} />
+                <View style={s.fieldWrap}>
+                    <View style={s.fieldLabelRow}>
+                        <Text style={s.fieldLabel}>Anxiety Level</Text>
+                        <View style={[s.valuePill, {
+                            backgroundColor: parseInt(formData.anxiety_level) >= 7 ? T.red + '33' : parseInt(formData.anxiety_level) >= 4 ? T.amber + '33' : T.green + '33',
+                            borderColor:     parseInt(formData.anxiety_level) >= 7 ? T.red + '66' : parseInt(formData.anxiety_level) >= 4 ? T.amber + '66' : T.green + '66',
+                        }]}>
+                            <Text style={{ fontSize: 12, fontWeight: '800', color: parseInt(formData.anxiety_level) >= 7 ? T.red : parseInt(formData.anxiety_level) >= 4 ? T.amber : T.green }}>
+                                {formData.anxiety_level}/10
+                            </Text>
+                        </View>
+                    </View>
+                    <Scale field="anxiety_level" />
                 </View>
             </View>
 
             {/* Hydration & Nutrition */}
-            <Text
-                style={[
-                    styles.sectionSubheading,
-                    darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                ]}
-            >
-                Hydration & Nutrition
-            </Text>
-
-            <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
-                    Hydration Level
-                </Text>
-                <View style={styles.optionRow}>
-                    {['Low', 'Adequate', 'Excellent'].map((option) => (
-                        <Pressable
-                            key={option}
-                            onPress={() => setFormData({ ...formData, hydration: option })}
-                            style={[
-                                styles.optionButton,
-                                darkMode ? styles.optionButtonDark : styles.optionButtonLight,
-                                formData.hydration === option &&
-                                (darkMode ? styles.optionButtonSelectedDark : styles.optionButtonSelected),
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    formData.hydration === option && styles.optionTextSelected,
-                                ]}
-                            >
-                                {option}
-                            </Text>
-                        </Pressable>
-                    ))}
-                </View>
+            <View style={s.secHeader}>
+                <View style={[s.secDot, { backgroundColor: T.blue }]} />
+                <Text style={s.secTitle}>Hydration & Nutrition</Text>
             </View>
-
-            <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
-                    Caffeine Intake
-                </Text>
-                <View style={styles.optionRow}>
-                    {['Low', 'Moderate', 'High'].map((option) => (
-                        <Pressable
-                            key={option}
-                            onPress={() => setFormData({ ...formData, caffeine: option })}
-                            style={[
-                                styles.optionButton,
-                                darkMode ? styles.optionButtonDark : styles.optionButtonLight,
-                                formData.caffeine === option &&
-                                (darkMode ? styles.optionButtonSelectedDark : styles.optionButtonSelected),
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    formData.caffeine === option && styles.optionTextSelected,
-                                ]}
-                            >
-                                {option}
-                            </Text>
-                        </Pressable>
-                    ))}
+            <View style={s.card}>
+                <View style={s.fieldWrap}>
+                    <Text style={s.fieldLabel}>Hydration Level</Text>
+                    <OptionRow field="hydration" options={['Low','Adequate','Excellent']} />
                 </View>
-            </View>
-
-            <View style={styles.section}>
-                <Text
-                    style={[
-                        styles.label,
-                        darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                    ]}
-                >
-                    Sugar Consumption
-                </Text>
-                <View style={styles.optionRow}>
-                    {['Low', 'Normal', 'High'].map((option) => (
-                        <Pressable
-                            key={option}
-                            onPress={() => setFormData({ ...formData, sugar_consumption: option })}
-                            style={[
-                                styles.optionButton,
-                                darkMode ? styles.optionButtonDark : styles.optionButtonLight,
-                                formData.sugar_consumption === option &&
-                                (darkMode ? styles.optionButtonSelectedDark : styles.optionButtonSelected),
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    formData.sugar_consumption === option && styles.optionTextSelected,
-                                ]}
-                            >
-                                {option}
-                            </Text>
-                        </Pressable>
-                    ))}
+                <View style={s.divider} />
+                <View style={s.fieldWrap}>
+                    <Text style={s.fieldLabel}>Caffeine Intake</Text>
+                    <OptionRow field="caffeine" options={['Low','Moderate','High']} />
+                </View>
+                <View style={s.divider} />
+                <View style={s.fieldWrap}>
+                    <Text style={s.fieldLabel}>Sugar Consumption</Text>
+                    <OptionRow field="sugar_consumption" options={['Low','Normal','High']} />
                 </View>
             </View>
 
             {/* Environment & Habits */}
-            <Text
-                style={[
-                    styles.sectionSubheading,
-                    darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                ]}
-            >
-                Environment & Habits
-            </Text>
-
-            <View style={styles.togglesContainer}>
-                {[
-                    { key: 'bright_lights', label: 'Bright Lights', icon: 'sunny' },
-                    { key: 'loud_noises', label: 'Loud Noises', icon: 'volume-high' },
-                    { key: 'strong_smells', label: 'Strong Smells', icon: 'flower' },
-                    { key: 'eye_strain', label: 'Eye Strain', icon: 'eye' },
-                    { key: 'neck_tension', label: 'Neck Tension', icon: 'body' },
-                    { key: 'posture_issues', label: 'Poor Posture', icon: 'accessibility' },
-                    { key: 'skipped_meals', label: 'Skipped Meals', icon: 'restaurant' },
-                    { key: 'irregular_schedule', label: 'Irregular Schedule', icon: 'time' },
-                    { key: 'weather_change', label: 'Weather Change', icon: 'cloud' },
-                    { key: 'hormonal_changes', label: 'Hormonal Changes', icon: 'fitness' },
-                    { key: 'alcohol_last_night', label: 'Alcohol Last Night', icon: 'wine' },
-                    { key: 'recent_illness', label: 'Recent Illness', icon: 'medkit' },
-                    { key: 'magnesium_deficiency', label: 'Magnesium Deficiency', icon: 'flask' },
-                    { key: 'dehydration', label: 'Dehydration', icon: 'water' },
-                    { key: 'physical_activity', label: 'Strenuous Activity', icon: 'barbell' },
-                ].map((item) => (
-                    <Pressable
-                        key={item.key}
-                        onPress={() => toggleTrigger(item.key as keyof TriggerFormData)}
-                        style={[
-                            styles.toggleItem,
-                            darkMode ? styles.toggleItemDark : styles.toggleItemLight,
-                            formData[item.key as keyof TriggerFormData] && styles.toggleItemActive,
-                        ]}
-                    >
-                        <View style={styles.toggleItemLeft}>
-                            <Ionicons
-                                name={item.icon as any}
-                                size={20}
-                                color={formData[item.key as keyof TriggerFormData] 
-                                    ? '#10b981' 
-                                    : darkMode ? '#a8d5c4' : '#7a9f94'}
-                                style={{ marginRight: 12 }}
-                            />
-                            <Text
-                                style={[
-                                    styles.toggleLabel,
-                                    darkMode ? { color: '#d4e8e0' } : { color: '#2d4a42' },
-                                    formData[item.key as keyof TriggerFormData] && styles.toggleLabelActive,
-                                ]}
+            <View style={s.secHeader}>
+                <View style={[s.secDot, { backgroundColor: T.amber }]} />
+                <Text style={s.secTitle}>Environment & Habits</Text>
+            </View>
+            <View style={s.card}>
+                {TOGGLES.map((item, i) => {
+                    const active = !!formData[item.key as keyof TriggerFormData];
+                    return (
+                        <React.Fragment key={item.key}>
+                            {i > 0 && <View style={s.divider} />}
+                            <Pressable
+                                onPress={() => toggle(item.key as keyof TriggerFormData)}
+                                style={s.toggleRow}
                             >
-                                {item.label}
-                            </Text>
-                        </View>
-                        <Ionicons
-                            name={formData[item.key as keyof TriggerFormData] ? 'checkbox' : 'square-outline'}
-                            size={24}
-                            color={formData[item.key as keyof TriggerFormData] ? '#10b981' : darkMode ? '#5a8f7f' : '#a8d5c4'}
-                        />
-                    </Pressable>
-                ))}
+                                <View style={[s.toggleIcon, {
+                                    backgroundColor: active ? item.color + '22' : T.cardDeep,
+                                    borderColor:     active ? item.color + '55' : T.border,
+                                }]}>
+                                    <Ionicons name={item.icon as any} size={16} color={active ? item.color : T.muted} />
+                                </View>
+                                <Text style={[s.toggleLabel, active && { color: item.color, fontWeight: '700' }]}>
+                                    {item.label}
+                                </Text>
+                                <View style={[s.checkbox, active && { backgroundColor: T.accent, borderColor: T.accent }]}>
+                                    {active && <Ionicons name="checkmark" size={14} color="#fff" />}
+                                </View>
+                            </Pressable>
+                        </React.Fragment>
+                    );
+                })}
             </View>
 
             <Pressable
                 onPress={handlePredict}
                 disabled={loading}
-                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+                style={({ pressed }) => [s.submitBtn, loading && { opacity: 0.6 }, pressed && s.pressed]}
             >
-                {loading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.submitButtonText}>Check My Risk Today</Text>
-                )}
+                {loading
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <>
+                        <Ionicons name="shield-checkmark" size={18} color="#fff" />
+                        <Text style={s.submitBtnText}>Check My Risk Today</Text>
+                      </>}
             </Pressable>
+
         </ScrollView>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    containerLight: {
-        backgroundColor: '#f5f8f7',
-    },
-    containerDark: {
-        backgroundColor: '#1a2522',
-    },
-    content: {
-        padding: 20,
-        paddingBottom: 30,
-    },
-    sectionTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    sectionSubtitle: {
-        fontSize: 14,
-        marginBottom: 24,
-    },
-    sectionSubheading: {
-        fontSize: 16,
-        fontWeight: '600',
-        marginTop: 20,
-        marginBottom: 12,
-    },
-    section: {
-        marginBottom: 16,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-    helperText: {
-        fontSize: 11,
-        marginTop: 4,
-        fontStyle: 'italic',
-    },
+const s = StyleSheet.create({
+    root:    { flex: 1, backgroundColor: T.bg },
+    content: { padding: 16, paddingBottom: 40, gap: 12 },
+
+    pageTitle: { fontSize: 22, fontWeight: '800', color: T.text, marginBottom: 2 },
+    pageSub:   { fontSize: 14, color: T.sub },
+
+    secHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+    secDot:    { width: 8, height: 8, borderRadius: 4 },
+    secTitle:  { fontSize: 15, fontWeight: '700', color: T.text },
+
+    card: { backgroundColor: T.card, borderRadius: 18, borderWidth: 1, borderColor: T.border, padding: 16 },
+    divider: { height: 1, backgroundColor: T.border, marginVertical: 14 },
+
+    fieldWrap:     { gap: 8 },
+    fieldLabel:    { fontSize: 14, fontWeight: '600', color: T.text },
+    fieldLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    valuePill:     { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
+    helper:        { fontSize: 11, color: T.muted, fontStyle: 'italic' },
+
     input: {
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: 10,
-        fontSize: 14,
-        borderWidth: 1,
+        backgroundColor: T.cardDeep, borderRadius: 12, borderWidth: 1,
+        borderColor: T.border, paddingHorizontal: 14, paddingVertical: 11,
+        fontSize: 15, color: T.text, fontWeight: '600',
     },
-    inputLight: {
-        backgroundColor: '#fff',
-        borderColor: '#d4e8e0',
-        color: '#2d4a42',
+
+    optionRow:       { flexDirection: 'row', gap: 8 },
+    optionBtn:       { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: T.cardDeep, borderWidth: 1, borderColor: T.border },
+    optionBtnActive: { backgroundColor: T.accent, borderColor: T.accent },
+    optionText:      { fontSize: 13, fontWeight: '600', color: T.sub },
+    optionTextActive:{ color: '#fff' },
+
+    scaleRow:    { flexDirection: 'row', gap: 4 },
+    scaleBtn:    { flex: 1, paddingVertical: 9, borderRadius: 8, alignItems: 'center', backgroundColor: T.cardDeep, borderWidth: 1, borderColor: T.border },
+    scaleBtnText:{ fontSize: 12, fontWeight: '700', color: T.muted },
+
+    toggleRow:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    toggleIcon: { width: 32, height: 32, borderRadius: 9, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    toggleLabel:{ flex: 1, fontSize: 14, fontWeight: '500', color: T.sub },
+    checkbox:   { width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.cardDeep, alignItems: 'center', justifyContent: 'center' },
+
+    // ── Results ──
+    heroCard: {
+        backgroundColor: T.card, borderRadius: 20, borderWidth: 1,
+        borderColor: T.border, borderLeftWidth: 4,
+        padding: 18, flexDirection: 'row', alignItems: 'center', gap: 16,
     },
-    inputDark: {
-        backgroundColor: '#253029',
-        borderColor: '#5a8f7f',
-        color: '#d4e8e0',
-    },
-    optionRow: {
-        flexDirection: 'row',
-        gap: 10,
-    },
-    optionButton: {
-        flex: 1,
-        paddingVertical: 10,
-        borderRadius: 10,
-        alignItems: 'center',
-        borderWidth: 1,
-    },
-    optionButtonLight: {
-        backgroundColor: '#fff',
-        borderColor: '#d4e8e0',
-    },
-    optionButtonDark: {
-        backgroundColor: '#253029',
-        borderColor: '#5a8f7f',
-    },
-    optionButtonSelected: {
-        backgroundColor: '#10b981',
-        borderColor: '#059669',
-    },
-    optionButtonSelectedDark: {
-        backgroundColor: '#059669',
-        borderColor: '#059669',
-    },
-    optionText: {
-        fontSize: 12,
-        fontWeight: '500',
-        color: '#2d4a42',
-    },
-    optionTextSelected: {
-        color: '#fff',
-    },
-    sliderContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 4,
-    },
-    sliderButton: {
-        flex: 1,
-        paddingVertical: 8,
-        borderRadius: 8,
-        alignItems: 'center',
-        borderWidth: 1,
-    },
-    sliderButtonLight: {
-        backgroundColor: '#fff',
-        borderColor: '#d4e8e0',
-    },
-    sliderButtonDark: {
-        backgroundColor: '#253029',
-        borderColor: '#5a8f7f',
-    },
-    sliderButtonActive: {
-        backgroundColor: '#10b981',
-        borderColor: '#059669',
-    },
-    sliderButtonActiveDark: {
-        backgroundColor: '#059669',
-        borderColor: '#059669',
-    },
-    sliderButtonText: {
-        fontWeight: '600',
-        fontSize: 12,
-    },
-    sliderButtonTextLight: {
-        color: '#2d4a42',
-    },
-    sliderButtonTextDark: {
-        color: '#a8d5c4',
-    },
-    sliderButtonTextSelected: {
-        color: '#fff',
-    },
-    togglesContainer: {
-        marginBottom: 20,
-    },
-    toggleItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderRadius: 12,
-        marginBottom: 8,
-        borderWidth: 1,
-    },
-    toggleItemLight: {
-        backgroundColor: '#fff',
-        borderColor: '#d4e8e0',
-    },
-    toggleItemDark: {
-        backgroundColor: '#253029',
-        borderColor: '#5a8f7f',
-    },
-    toggleItemActive: {
-        borderColor: '#10b981',
-        borderWidth: 2,
-    },
-    toggleItemLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    toggleLabel: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    toggleLabelActive: {
-        color: '#10b981',
-        fontWeight: '600',
-    },
-    resultCard: {
-        borderRadius: 16,
-        padding: 24,
-        alignItems: 'center',
-        marginBottom: 24,
-        borderWidth: 1,
-    },
-    resultCardLight: {
-        backgroundColor: '#fff',
-        borderColor: '#d4e8e0',
-    },
-    resultCardDark: {
-        backgroundColor: '#253029',
-        borderColor: '#5a8f7f',
-    },
-    resultType: {
-        fontSize: 20,
-        fontWeight: '700',
-        marginBottom: 8,
-    },
-    resultPercentage: {
-        fontSize: 14,
-        marginBottom: 4,
-    },
-    resultPrediction: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    triggerItem: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: 10,
-        marginBottom: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 10,
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    },
-    triggerText: {
-        fontSize: 13,
-        flex: 1,
-        lineHeight: 18,
-    },
-    recommendationBox: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 16,
-        borderRadius: 12,
-        borderWidth: 1,
-    },
-    recommendationBoxLight: {
-        backgroundColor: '#e8f5f2',
-        borderColor: '#d4e8e0',
-    },
-    recommendationBoxDark: {
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        borderColor: '#5a8f7f',
-    },
-    recommendationText: {
-        fontSize: 14,
-        flex: 1,
-        lineHeight: 20,
-    },
-    submitButton: {
-        backgroundColor: '#10b981',
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    submitButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    submitButtonDisabled: {
-        opacity: 0.6,
-    },
+    heroIconWrap:  { width: 64, height: 64, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    heroRight:     { flex: 1, gap: 6 },
+    heroRisk:      { fontSize: 20, fontWeight: '800' },
+    heroPct:       { fontSize: 13, color: T.sub },
+    predictedPill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
+
+    triggerRow:      { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10 },
+    triggerIconWrap: { width: 24, height: 24, borderRadius: 7, backgroundColor: T.red + '22', borderWidth: 1, borderColor: T.red + '44', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    triggerText:     { fontSize: 13, color: T.sub, flex: 1, lineHeight: 19 },
+
+    recommendCard:    { backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, flexDirection: 'row', alignItems: 'flex-start', padding: 16, gap: 12 },
+    recommendIconWrap:{ width: 36, height: 36, borderRadius: 10, backgroundColor: T.amber + '22', borderWidth: 1, borderColor: T.amber + '44', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    recommendText:    { fontSize: 14, color: T.sub, flex: 1, lineHeight: 21 },
+
+    submitBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: T.accent, paddingVertical: 15, borderRadius: 14, marginTop: 4 },
+    submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    pressed:       { opacity: 0.8, transform: [{ scale: 0.97 }] },
 });

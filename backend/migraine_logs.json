@@ -449,5 +449,22 @@
     "notes": "Woke up with it",
     "timestamp": "2026-01-08T07:00:00.000Z",
     "episode_id": "ep_1773100014_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 5,
+    "severity": 2,
+    "symptoms": [],
+    "triggers": [],
+    "medication": [],
+    "medication_effectiveness": null,
+    "relief_methods": [],
+    "pain_location": "",
+    "duration_category": "1-2h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "",
+    "timestamp": "2026-03-15T20:19:05.303Z",
+    "episode_id": "ep_1773587947_ddd"
   }
 ]
