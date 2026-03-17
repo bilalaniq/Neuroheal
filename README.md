@@ -104,74 +104,137 @@ NeuroHeal is a React Native (Expo) mobile application that helps migraine suffer
 
 ## 🏗 Tech Stack
 
-| Layer       | Technology                                    |
-| ----------- | --------------------------------------------- |
-| Framework   | React Native + Expo (SDK 51+)                 |
-| Navigation  | Expo Router (file-based)                      |
-| Language    | TypeScript                                    |
-| Styling     | React Native StyleSheet                       |
-| Icons       | `@expo/vector-icons` (Ionicons)               |
-| Gradients   | `expo-linear-gradient`                        |
-| Blur        | `expo-blur`                                   |
-| Location    | `expo-location`                               |
-| PDF Export  | `expo-print` + `expo-sharing`                 |
-| AI          | `groq`                                        |
-| Weather API | Open-Meteo (free, no key needed)              |
-| Backend     | Custom REST API (Python/FastAPI)              |
-| State       | React Context (`UserContext`, `ThemeContext`) |
+
+| Layer           | Technology                                                         |
+| --------------- | ------------------------------------------------------------------ |
+| **Framework**   | React Native + Expo (SDK 51+)                                      |
+| **Navigation**  | Expo Router (file-based)                                           |
+| **Language**    | TypeScript                                                         |
+| **Styling**     | React Native StyleSheet                                            |
+| **Icons**       | @expo/vector-icons (Ionicons)                                      |
+| **Gradients**   | expo-linear-gradient                                               |
+| **Blur**        | expo-blur                                                          |
+| **Location**    | expo-location                                                      |
+| **PDF Export**  | expo-print + expo-sharing                                          |
+| **AI**          | groq                                                               |
+| **Weather API** | Open-Meteo (free, no key needed)                                   |
+| **Fitness API** | Google Fitness API (OAuth 2.0, tracks steps, calories, heart rate) |
+| **Backend**     | Custom REST API (Python/FastAPI)                                   |
+| **State**       | React Context (UserContext, ThemeContext)                          |
+
 
 ---
 
 ## 📁 Project Structure
 
+
+```bash
+project
+│
+├── 📁 backend/                 # Python FastAPI Backend
+│   ├── 📁 artifacts/           # Generated artifacts/models
+│   ├── 📁 data/                # Data files
+│   ├── 📁 venv/                # Python virtual environment
+│   ├── 📁 __pycache__/         # Python cache
+│   ├── .env                    # Environment variables
+│   ├── .env.example            # Example environment variables
+│   ├── .dockerignore           
+│   ├── bigquery_schema.json    # BigQuery schema definition
+│   ├── config.py               # Configuration settings
+│   ├── credentials.json        # Google service credentials
+│   ├── Dockerfile              # Docker configuration
+│   ├── get-pip.py              # Pip installer script
+│   ├── google_fit_service.py   # Google Fit API integration
+│   ├── main.py                 # Main FastAPI application
+│   ├── migraine_logs.json      # Migraine logs data
+│   ├── migraine_service.py     # Migraine business logic
+│   ├── model.py                # Data models
+│   ├── README.md               # Backend documentation
+│   ├── requirements.txt        # Python dependencies
+│   ├── schemas.py              # Pydantic schemas
+│   ├── test_api.py             # API tests
+│   ├── token.pickle            # OAuth token storage
+│   └── __init__.py             # Python package init
+│
+├── 📁 data/                     # Data Directory
+│   ├── 📁 .venv/                # Virtual environment
+│   ├── 📁 data_set/             # Dataset files
+│   ├── 📁 migraine_data/        # Migraine specific data
+│   ├── 📁 migraine_symptom_classification/ # ML classification data
+│   ├── 📁 sleep_model/          # Sleep model data
+│   └── 📁 src/                   # Data source scripts
+│
+├── 📁 img/                       # Images and assets
+│
+├── 📁 mobile/                    # React Native Expo App
+│   ├── 📁 .expo/                 # Expo configuration
+│   ├── 📁 .idea/                 # IDE settings
+│   ├── 📁 .vscode/               # VS Code settings
+│   ├── 📁 android/               # Android native files
+│   ├── 📁 app/                    # Main application code (Expo Router)
+│   │   ├── 📁 (tabs)/             # Tab navigation screens
+│   │   ├── 📁 auth/               # Authentication screens
+│   │   ├── _layout.tsx            # Root layout
+│   │   └── index.tsx              # Entry screen
+│   ├── 📁 assets/                  # Static assets
+│   │   ├── 📁 fonts/               # Custom fonts
+│   │   ├── 📁 images/              # Images
+│   │   └── 📁 icons/               # Icons
+│   ├── 📁 components/               # Reusable components
+│   │   ├── MigraineCalendar.tsx    # Calendar component
+│   │   ├── MigraineReportChart.tsx # Chart component
+│   │   ├── ModernHeader.tsx        # Header component
+│   │   └── ...                     # Other components
+│   ├── 📁 config/                   # Configuration files
+│   ├── 📁 constants/                 # App constants
+│   ├── 📁 contexts/                  # React Context
+│   │   ├── ThemeContext.tsx         # Theme management
+│   │   └── UserContext.tsx          # User state management
+│   ├── 📁 hooks/                     # Custom hooks
+│   │   └── useRealtimeMonitoring.ts # Real-time monitoring hook
+│   ├── 📁 node_modules/              # NPM dependencies
+│   ├── 📁 scripts/                   # Utility scripts
+│   ├── 📁 services/                   # API services
+│   │   ├── api.ts                     # API client
+│   │   ├── auth.ts                     # Authentication service
+│   │   └── weather.ts                  # Weather service
+│   ├── 📁 utils/                       # Utility functions
+│   ├── .env                            # Environment variables
+│   ├── .gitignore                      # Git ignore rules
+│   ├── app.json                        # Expo configuration
+│   ├── eas.json                        # EAS Build configuration
+│   ├── eslint.config.js                # ESLint config
+│   ├── eslint.config.mjs               # ESLint module config
+│   ├── expo-env.d.ts                   # Expo type definitions
+│   ├── FINAL_ASSESSMENT.md              # Final assessment doc
+│   ├── FINAL_VERIFICATION.md            # Final verification doc
+│   ├── MOBILE_APP_GUIDE.md              # Mobile app guide
+│   ├── package.json                     # NPM dependencies
+│   ├── package-lock.json                # Locked dependencies
+│   ├── PROJECT_COMPLETE.md              # Project completion doc
+│   ├── README.md                        # Mobile app documentation
+│   └── tsconfig.json                    # TypeScript configuration
+│
+├── .dockerignore                  # Docker ignore file
+├── .env.local                     # Local environment variables
+├── .gitignore                     # Git ignore rules
+├── cloudbuild.yaml                 # Google Cloud Build config
+├── howto.txt                       # Setup instructions
+├── package-lock.json               # Root package lock
+├── README.md                       # Main project documentation
+├── requirements.txt                 # Python dependencies
+├── setup.sh                         # Setup script
+├── start_api.bat                    # Windows API starter
+├── start_api.ps1                     # PowerShell API starter
+├── temp.txt                          # Temporary file
+└── test_api_calls.py                 # API test script
+
 ```
-app/
-├── index.tsx                  # Splash + Login screen
-├── _layout.tsx                # Root layout with providers
-├── (tabs)/
-│   └── index.tsx              # Home screen (dashboard)
-├── ai-chat.tsx                # AI chat screen
-├── patterns.tsx               # Pattern warnings screen
-├── emergency.tsx              # SOS emergency screen
-├── weather-forecast.tsx       # 5-day forecast
-├── neuro-record.tsx           # Calendar + chart combined
-├── export.tsx                 # Health metrics + PDF export
-├── logging.tsx                # Logging hub entry point
-└── menu.tsx                   # Floating menu
 
-components/
-├── NavigationBar.tsx          # Top nav with drawer menu + user profile
-├── ModernHeader.tsx           # Back button header for sub-screens
-├── MigraineCalendar.tsx       # Calendar component
-├── MigraineReportChart.tsx    # Bar chart + daily breakdown
-├── PatternWarnings.tsx        # Pattern alert cards
-├── FloatingMenu.tsx           # Animated FAB menu
-├── OnboardingScreen.tsx       # First-time setup flow
-├── AIInsightButton.tsx        # Reusable AI insight trigger
-└── quick-log/
-    ├── index.tsx              # LoggingHub tab container
-    ├── quick-log.tsx          # QuickLog component
-    ├── detailed-classify.tsx  # DetailedClassify component
-    ├── morning-check.tsx      # MorningCheck component
-    └── sleep-log.tsx          # SleepLog component
-
-contexts/
-├── UserContext.tsx             # User data, name, integrations
-└── ThemeContext.tsx            # Dark mode toggle
-
-hooks/
-└── useRealtimeMonitoring.ts   # Weather + step monitoring hook
-
-services/
-└── aiService.ts               # Claude API wrapper
-
-config/
-└── api.ts                     # Backend URL + endpoint constants
-```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -184,151 +247,104 @@ config/
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/neuroheal.git
-cd neuroheal
+
+cd Neuroheal
+
+
+cd mobile
 
 # Install dependencies
 npm install
 
 # Start the development server
 npx expo start
+
+# or use 
+
+npx expo run:android
+
 ```
 
 ### Backend Setup
 
 The app requires a running backend server for health data, migraine episode storage, and ML predictions.
 
+
+>[!NOTE]
+> i will be using wsl for backend
+
 ```bash
 # In your backend directory
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+uvicorn main:app --host 0.0.0.0 --port 8080 --reload        # for wsl 
+
+uvicorn main:app --port 8080 --reload        # for the same machine 
+
 ```
 
 Then update `BACKEND_URL` in `app/(tabs)/index.tsx` and `config/api.ts`:
 
 ```ts
-// Android emulator
-const BACKEND_URL = 'http://10.0.2.2:8080';
+// for web 
+const BACKEND_URL = 'http://localhost:8080'; 
+```
 
-// iOS simulator
-const BACKEND_URL = 'http://localhost:8080';
 
-// Physical device — replace with your machine's local IP
+
+
+
+to get the ip of wsl machine
+
+```bash
+hostname -I
+```
+
+place the ip here
+
+```ts
 const BACKEND_URL = 'http://192.168.X.X:8080';
 ```
 
+
+## ML predictions
+
+For ML predictions do these steps
+
+
+```bash
+cd data
+
+cd src
+
+python migraine_data_train.py
+python migraine_symptom_classification_train.py
+python sleep_train.py
+
+# run these three files to get the ML prediction setup ready
+
+```
+
+
 ### AI Setup
 
-Add your Anthropic API key in `services/aiService.ts`:
+go to https://console.groq.com/
+
+and create an api key 
+
+Add your groq API key in `.env` files in the mobile folder :
+
+
 
 ```ts
-const API_KEY = 'sk-ant-...';
+# ================================
+# NeuroHeal Mobile App - Environment
+# ================================
+
+EXPO_PUBLIC_GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ---
 
-## 🔌 Backend API Endpoints
-
-| Method | Endpoint                              | Description                          |
-| ------ | ------------------------------------- | ------------------------------------ |
-| GET    | `/health/full?days=7`                 | Sleep, steps, blood pressure, weight |
-| POST   | `/migraine-episodes`                  | Log a new episode                    |
-| PUT    | `/migraine-episodes/:id`              | Update existing episode              |
-| GET    | `/migraine-episodes/history?user_id=` | Fetch all episodes for a user        |
-| POST   | `/sleep`                              | Sleep quality assessment             |
-| POST   | `/migraine/today`                     | Daily migraine risk prediction       |
-| POST   | `/symptom-type`                       | Migraine type classification         |
-
----
-
-## 🎨 Design System
-
-The app uses a consistent dark purple design language throughout:
-
-| Token          | Value     | Usage                          |
-| -------------- | --------- | ------------------------------ |
-| Background     | `#000000` | Screen backgrounds             |
-| Card           | `#231344` | All card surfaces              |
-| Card Deep      | `#160a2e` | Input backgrounds, inner cards |
-| Border         | `#2b0f4d` | All card borders               |
-| Accent         | `#6107c9` | Primary buttons, active states |
-| Text Primary   | `#ffffff` | Headings, values               |
-| Text Secondary | `#c4b5fd` | Labels, subtitles              |
-| Text Muted     | `#6b21a8` | Helper text, placeholders      |
-| Green          | `#34d399` | Success, mild severity         |
-| Amber          | `#fbbf24` | Warning, moderate severity     |
-| Red            | `#f87171` | Danger, severe severity        |
-| Indigo         | `#a78bfa` | Neurological symptoms          |
-| Blue           | `#60a5fa` | Environmental triggers         |
-
----
-
-## 📋 App Flow
-
-```
-App Launch
-    └── Splash Screen
-            └── Get Started → Login Screen
-                    └── Login / Google → Home Screen
-                            ├── AI Chat
-                            ├── Quick Tools Row
-                            │     ├── AI Chat
-                            │     ├── Log Migraine → Logging Hub
-                            │     │     ├── Quick Log
-                            │     │     ├── Classify
-                            │     │     ├── Daily Risk
-                            │     │     └── Sleep
-                            │     ├── Neuro Record → Calendar + Chart
-                            │     └── SOS Emergency
-                            ├── Pattern Warnings → Patterns Screen
-                            ├── Dashboard Cards
-                            │     └── Weather → 5-Day Forecast
-                            └── Migraine Calendar
-
-    Navigation Drawer (☰ menu)
-            ├── Home
-            ├── Log Migraine
-            ├── Patterns
-            ├── AI Chat
-            ├── Calendar
-            ├── Weather Forecast
-            ├── Emergency
-            ├── Export → Health Metrics + PDF
-            └── Notifications
-```
-
----
-
-## 🔐 Permissions
-
-| Permission             | Purpose                                                |
-| ---------------------- | ------------------------------------------------------ |
-| Location (When In Use) | GPS coordinates for weather data and reverse geocoding |
-
----
-
-## 📦 Key Dependencies
-
-```json
-{
-  "expo": "~51.0.0",
-  "expo-router": "^3.0.0",
-  "expo-linear-gradient": "^13.0.0",
-  "expo-blur": "^13.0.0",
-  "expo-location": "^17.0.0",
-  "expo-print": "^13.0.0",
-  "expo-sharing": "^12.0.0",
-  "react-native-safe-area-context": "^4.0.0",
-  "@expo/vector-icons": "^14.0.0"
-}
-```
-
----
-
-## ⚠️ Medical Disclaimer
-
-NeuroHeal is a personal health tracking tool designed to help users log and understand their migraine patterns. It is **not a medical device** and does not provide medical diagnoses. AI insights and risk predictions are informational only. Always consult a qualified healthcare professional for medical advice, diagnosis, or treatment.
-
----
 
 ## 👥 Contributing
 
@@ -346,13 +362,5 @@ This project is licensed under the MIT License. See `LICENSE` for details.
 
 ---
 
-## 🙏 Acknowledgements
-
-- [Open-Meteo](https://open-meteo.com/) — Free weather API, no key required
-- [Anthropic](https://anthropic.com/) — Claude AI powering health insights
-- [Expo](https://expo.dev/) — React Native development framework
-- [Ionicons](https://ionic.io/ionicons) — Icon library
-
----
 
 *Built with ❤️ to help migraine sufferers understand and manage their condition.*
