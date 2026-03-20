@@ -9,16 +9,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator, Image } from 'react-native';
+import { API_BASE_URL as BACKEND_URL } from '@/config/api';
+
 
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width - 48, 700);
 
-// ── Change this to your PC's local IP when testing on a real device ──────────
-// const BACKEND_URL = 'http://10.0.2.2:8080'; // Android emulator
-const BACKEND_URL = 'http://192.168.37.37:8080';
-// const BACKEND_URL = 'http://localhost:8080';  // iOS simulator
-// const BACKEND_URL = 'http://192.168.1.X:8080'; // Real device
+
+
 
 export default function HomeScreen() {
   const darkMode = false;

@@ -8,8 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '@/contexts/UserContext';
 import { getAIResponse } from '@/services/aiService';
 import { LinearGradient } from 'expo-linear-gradient';
+import { API_BASE_URL as BACKEND_URL } from '@/config/api';
 
-const BACKEND_URL = 'http://192.168.37.37:8080';
+
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width, 448);
 

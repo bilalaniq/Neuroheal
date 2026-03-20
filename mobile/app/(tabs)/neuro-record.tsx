@@ -8,8 +8,8 @@ import { useRouter } from 'expo-router';
 import { MigraineCalendar } from '@/components/MigraineCalendar';
 import { MigraineReportChart } from '@/components/MigraineReportChart';
 import { ModernHeader } from '@/components/ModernHeader';
+import { API_BASE_URL as BACKEND_URL } from '@/config/api';
 
-const BACKEND_URL = 'http://192.168.37.37:8080';
 
 export default function NeuroRecordScreen() {
     const router = useRouter();

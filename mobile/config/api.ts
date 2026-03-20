@@ -1,12 +1,5 @@
-/**
- * API Configuration
- *
- * ⚠️  Change API_BASE_URL depending on where you are testing:
- *   Web browser      →  'http://localhost:8080'
- *   Android emulator →  'http://10.0.2.2:8080'
- *   Physical device  →  'http://192.168.37.37:8080'
- */
-export const API_BASE_URL = 'http://192.168.37.37:8080';     // because i am using wsl so use hostname -l to get the ip address of wsl and use that ip address here 
+
+export const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:8080';     // because i am using wsl so use hostname -l to get the ip address of wsl and use that ip address here 
 
 export const API_ENDPOINTS = {
   health: '/health',

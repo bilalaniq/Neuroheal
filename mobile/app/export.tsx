@@ -10,8 +10,8 @@ import { useUser } from '@/contexts/UserContext';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { getAIResponse } from '@/services/aiService';
+import { API_BASE_URL as BACKEND_URL } from '@/config/api';
 
-const BACKEND_URL = 'http://192.168.37.37:8080';
 
 interface MigraineLog {
     date: string; hasMigraine: boolean; severity: number; intensity: number;

@@ -282,15 +282,12 @@ uvicorn main:app --port 8080 --reload        # for the same machine
 
 ```
 
-Then update `BACKEND_URL` in `app/(tabs)/index.tsx` and `config/api.ts`:
+Then update `EXPO_PUBLIC_BACKEND_URL` in `.env` :
 
 ```ts
 // for web 
-const BACKEND_URL = 'http://localhost:8080'; 
+EXPO_PUBLIC_BACKEND_URL = 'http://localhost:8080'; 
 ```
-
-
-
 
 
 to get the ip of wsl machine
@@ -302,7 +299,7 @@ hostname -I
 place the ip here
 
 ```ts
-const BACKEND_URL = 'http://192.168.X.X:8080';
+EXPO_PUBLIC_BACKEND_URL = 'http://192.168.X.X:8080';
 ```
 
 

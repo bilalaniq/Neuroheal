@@ -10,8 +10,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
 import { getAIResponse } from '@/services/aiService';
+import { API_BASE_URL as BACKEND_URL } from '@/config/api';
 
-const BACKEND_URL = 'http://192.168.37.37:8080';
 const HIGH_CONFIDENCE_THRESHOLD = 80;
 
 interface PatternWarningsProps {
@@ -82,9 +82,8 @@ export function PatternWarnings({ onPress, maxItems = 2, style }: PatternWarning
           const avg = (
             logs.reduce((s: number, l: any) => s + (l.intensity ?? 0), 0) / logs.length
           ).toFixed(1);
-          logSummary = `${logs.length} episodes, avg intensity ${avg}/10, top triggers: ${
-            triggers.map((t) => `${t.name}(${t.count}x)`).join(', ') || 'none'
-          }`;
+          logSummary = `${logs.length} episodes, avg intensity ${avg}/10, top triggers: ${triggers.map((t) => `${t.name}(${t.count}x)`).join(', ') || 'none'
+            }`;
         }
       }
 
