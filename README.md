@@ -282,7 +282,7 @@ uvicorn main:app --port 8080 --reload        # for the same machine
 
 ```
 
-Then update `EXPO_PUBLIC_BACKEND_URL` in `.env` :
+Then update `EXPO_PUBLIC_BACKEND_URL` in `.env` in the mobile folder :
 
 ```ts
 // for web 
