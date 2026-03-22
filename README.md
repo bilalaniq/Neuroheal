@@ -1,8 +1,19 @@
-# NEURO:HΞAL — Migraine Tracker & Health Monitor
+# Neuro:Heal — Migraine Tracker & Health Monitor
 
-> A user-friendly gateway to your healthier lifestyle journey.
 
 NeuroHeal is a React Native (Expo) mobile application that helps migraine sufferers track episodes, monitor health vitals, predict daily migraine risk, and receive AI-powered health insights — all in one place.
+
+<br>
+<br>
+
+
+<div style="text-align: center;">
+  <img src="./img/neuroheal.png" width="900">
+</div>
+
+<br>
+<br>
+
 
 ---
 ## 📱 Screenshots
