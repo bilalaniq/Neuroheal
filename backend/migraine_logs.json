@@ -483,5 +483,32 @@
     "notes": "",
     "timestamp": "2026-03-17T14:43:17.305Z",
     "episode_id": "ep_1773740599_ddd"
+  },
+  {
+    "user_id": "ddd",
+    "intensity": 4,
+    "severity": 2,
+    "symptoms": [
+      "Throbbing",
+      "Photophobia",
+      "Facial Pain"
+    ],
+    "triggers": [
+      "Poor Sleep",
+      "Alcohol",
+      "Screen Time"
+    ],
+    "medication": [],
+    "medication_effectiveness": null,
+    "relief_methods": [
+      "Sleep"
+    ],
+    "pain_location": "Right side",
+    "duration_category": "2-4h",
+    "warning_signs_before": false,
+    "warning_description": "",
+    "notes": "",
+    "timestamp": "2026-03-25T17:50:15.310Z",
+    "episode_id": "ep_1774443016_ddd"
   }
 ]

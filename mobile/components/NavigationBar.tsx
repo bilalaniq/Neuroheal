@@ -25,15 +25,16 @@ const DRAWER_WIDTH = width * 0.72;
 
 // ── All nav items ──────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { icon: 'home',              label: 'Home',                 route: '/(tabs)',                   accent: '#c084fc' },
-  { icon: 'pulse',             label: 'Log Migraine',         route: '/migraine',                 accent: '#a78bfa' },
-  { icon: 'trending-up',       label: 'Patterns',             route: '/patterns',                 accent: '#818cf8' },
-  { icon: 'chatbubble-ellipses', label: 'AI Chat',            route: '/ai-chat',                  accent: '#60a5fa' },
-  { icon: 'calendar',          label: 'Calendar',             route: '/neuro-record',                 accent: '#34d399' },
-  { icon: 'cloud-outline',     label: 'Weather Forecast',     route: '/weather-forecast',         accent: '#38bdf8' },
-  { icon: 'medical',           label: 'Emergency',            route: '/emergency',                accent: '#f87171' },
-  { icon: 'document-text',     label: 'Export',               route: '/export',                   accent: '#fbbf24' },
-  { icon: 'notifications',     label: 'Notifications',        route: '/notification-settings',    accent: '#fb923c' },
+  { icon: 'home', label: 'Home', route: '/(tabs)', accent: '#c084fc' },
+  { icon: 'pulse', label: 'Log Migraine', route: '/migraine', accent: '#a78bfa' },
+  { icon: 'trending-up', label: 'Patterns', route: '/patterns', accent: '#818cf8' },
+  { icon: 'chatbubble-ellipses', label: 'AI Chat', route: '/ai-chat', accent: '#60a5fa' },
+  { icon: 'calendar', label: 'Calendar', route: '/neuro-record', accent: '#34d399' },
+  { icon: 'cloud-outline', label: 'Weather Forecast', route: '/weather-forecast', accent: '#38bdf8' },
+  { icon: 'medical', label: 'Emergency', route: '/emergency', accent: '#f87171' },
+  { icon: 'document-text', label: 'Export', route: '/export', accent: '#fbbf24' },
+  { icon: 'notifications', label: 'Notifications', route: '/notification-settings', accent: '#fb923c' },
+  { icon: 'people', label: 'Community', route: '/community', accent: '#2E8B57' },
 ] as const;
 
 export function NavigationBar({
@@ -48,9 +49,9 @@ export function NavigationBar({
   const { userData, clearUserData } = useUser();
   const insets = useSafeAreaInsets();
 
-  const [showProfile, setShowProfile]   = useState(false);
-  const [showDrawer, setShowDrawer]     = useState(false);
-  const drawerAnim  = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const [showProfile, setShowProfile] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
 
   // ── Drawer open/close ──────────────────────────────────────────────────

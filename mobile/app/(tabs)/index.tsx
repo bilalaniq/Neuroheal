@@ -364,6 +364,20 @@ export default function HomeScreen() {
 
           </View>
 
+          {/* Community Card */}
+          <Pressable
+            onPress={() => router.push('/community')}
+            style={({ pressed }) => [styles.communityCard, darkMode && styles.communityCardDark, pressed && styles.communityCardPressed]}
+          >
+            <View style={styles.communityHeader}>
+              <Ionicons name="people" size={24} color="#2E8B57" />
+              <Text style={[styles.communityTitle, darkMode && styles.communityTitleDark]}>Community</Text>
+            </View>
+            <Text style={[styles.communitySubtitle, darkMode && styles.communitySubtitleDark]}>
+              Connect with others, share experiences, and find support in our migraine community.
+            </Text>
+          </Pressable>
+
           {/* Migraine Calendar */}
           <MigraineCalendar migraineDays={migraineDays} darkMode={true} />
 
@@ -468,4 +482,12 @@ const styles = StyleSheet.create({
   emergencyVerticalTitleDark: { color: '#fff' },
   emergencyVerticalHint: { color: '#c4b5fd', fontSize: 12, marginTop: 4 },
   emergencyVerticalHintDark: { color: '#c4b5fd' },
+  communityCard: { width: '100%', backgroundColor: '#1a2e2a', borderRadius: 16, padding: 16, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 2 },
+  communityCardDark: { backgroundColor: '#1a2e2a' },
+  communityCardPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
+  communityHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  communityTitle: { fontSize: 18, fontWeight: '700', color: '#2E8B57', marginLeft: 8 },
+  communityTitleDark: { color: '#2E8B57' },
+  communitySubtitle: { fontSize: 14, color: '#c4b5fd', lineHeight: 20 },
+  communitySubtitleDark: { color: '#c4b5fd' },
 });

@@ -13,6 +13,7 @@ export default function RootLayout() {
           <Stack.Screen name="patterns" />
           <Stack.Screen name="emergency" />
           <Stack.Screen name="weather-forecast" />
+          <Stack.Screen name="community" />
         </Stack>
       </UserProvider>
     </ThemeProvider>
